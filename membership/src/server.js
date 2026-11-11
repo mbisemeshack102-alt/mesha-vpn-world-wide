@@ -2,6 +2,7 @@
 
 const express = require('express');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const Database = require('better-sqlite3');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
@@ -11,6 +12,13 @@ const app = express();
 app.disable('x-powered-by');
 app.use(helmet());
 app.use(express.json({ limit: '20kb' }));
+const authAttemptLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many attempts. Try again in 15 minutes.' }
+});
 
 const PORT = Number(process.env.PORT || 8080);
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
@@ -222,7 +230,7 @@ app.put('/api/admin/settings', adminOnly, (req, res) => {
 });
 app.use('/admin', express.static(path.join(__dirname, '../public'), { index: 'admin.html' }));
 
-app.post('/api/register', (req, res) => {
+app.post('/api/register', authAttemptLimiter, (req, res) => {
   const phone = normalizePhone(req.body.phone);
   const password = String(req.body.password || '');
   if (!phone || password.length < 8 || password.length > 128) return res.status(400).json({ error: 'Use a valid Tanzania mobile number and password of at least 8 characters.' });
@@ -236,7 +244,7 @@ app.post('/api/register', (req, res) => {
   }
 });
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', authAttemptLimiter, (req, res) => {
   const phone = normalizePhone(req.body.phone);
   const password = String(req.body.password || '');
   const user = phone && db.prepare('SELECT id,phone,password_hash FROM users WHERE phone = ?').get(phone);
