@@ -63,6 +63,45 @@ const PLANS = {
   platinum: { name: 'Platinum', speedMbps: 15, devices: 5, data: { day: 8, week: 25, month: 120 }, price: { day: 3500, week: 10500, month: 35000 } }
 };
 const DURATIONS = { day: 1, week: 7, month: 30 };
+
+const DEFAULT_PAYMENT_SETTINGS = {
+  provider: 'manual_airtel',
+  airtelLipaNumber: '',
+  recipientName: '',
+  enabledMethods: ['airtel_money'],
+  instructions: 'Payment instructions will be shown here after the administrator configures them.'
+};
+db.exec(`
+  CREATE TABLE IF NOT EXISTS app_settings (
+    setting_key TEXT PRIMARY KEY,
+    setting_value TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+`);
+function readSetting(key, fallback) {
+  const row = db.prepare('SELECT setting_value FROM app_settings WHERE setting_key = ?').get(key);
+  if (!row) return fallback;
+  try { return JSON.parse(row.setting_value); } catch { return fallback; }
+}
+function writeSetting(key, value) {
+  db.prepare(`INSERT INTO app_settings(setting_key,setting_value,updated_at) VALUES(?,?,?)
+    ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value, updated_at=excluded.updated_at`)
+    .run(key, JSON.stringify(value), nowIso());
+}
+function publicPaymentSettings() {
+  const saved = readSetting('payment', DEFAULT_PAYMENT_SETTINGS);
+  return {
+    provider: saved.provider,
+    airtelLipaNumber: saved.airtelLipaNumber,
+    recipientName: saved.recipientName,
+    enabledMethods: saved.enabledMethods,
+    instructions: saved.instructions
+  };
+}
+function currentPlans() {
+  const saved = readSetting('plans', null);
+  return saved && typeof saved === 'object' ? saved : PLANS;
+}
 const nowIso = () => new Date().toISOString();
 
 function normalizePhone(value) {
@@ -163,7 +202,7 @@ app.get('/api/me', auth, (req, res) => {
 app.post('/api/orders', auth, (req, res) => {
   const planId = String(req.body.planId || '').toLowerCase();
   const duration = String(req.body.duration || '').toLowerCase();
-  const plan = PLANS[planId];
+  const plan = currentPlans()[planId];
   if (!plan || !DURATIONS[duration]) return res.status(400).json({ error: 'Choose a valid plan and duration: day, week, or month.' });
   const id = 'KEM-' + crypto.randomBytes(8).toString('hex').toUpperCase();
   const amount = plan.price[duration];
@@ -187,7 +226,7 @@ app.post('/api/admin/orders/:id/confirm', adminOnly, (req, res) => {
   const reference = String(req.body.paymentReference || '').trim();
   if (!order) return res.status(404).json({ error: 'Pending order not found.' });
   if (!reference || reference.length > 100) return res.status(400).json({ error: 'A valid payment reference is required.' });
-  const plan = PLANS[order.plan_id];
+  const plan = currentPlans()[order.plan_id];
   const start = new Date();
   const expiry = addDuration(start, order.duration);
   const activate = db.transaction(() => {
