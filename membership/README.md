@@ -98,3 +98,11 @@ Example request body (send only from a trusted admin tool over HTTPS):
 ```
 
 The payment number is intentionally blank by default; configure it through the protected admin endpoint after verifying the official Airtel merchant details. The enabled methods are display/configuration flags only: mobile-money, bank and card checkout are **not** automatically processed by this endpoint. ClickPesa merchant onboarding, checkout API integration and verified webhooks are still required before automatic payment activation. Never put the admin key or payment-provider secrets in the Android APK.
+
+
+## Admin Dashboard (new)
+
+After deploying the membership API behind HTTPS, open `https://YOUR_API_HOST/admin/`.
+Enter the server-side `ADMIN_API_KEY` in the dashboard, load the saved settings, then update payment display details or plan prices/quotas and save. The dashboard calls the protected `GET /api/admin/settings` and `PUT /api/admin/settings` routes; the key is not compiled into the Android app. Keep the admin key private and use the dashboard only over HTTPS.
+
+The API also exposes `GET /api/payment-settings` for public payment instructions. `GET /api/plans` now reads the configured plan values. Only supported payment method labels can be selected. These settings do not process or verify payments. Manual transaction review remains required until an official merchant checkout and signed webhook integration is implemented.
