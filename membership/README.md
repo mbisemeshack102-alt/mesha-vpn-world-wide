@@ -31,7 +31,13 @@ openssl rand -hex 32
 openssl rand -hex 32
 ```
 
-Put one in `TOKEN_SECRET`, the other in `ADMIN_API_KEY`. Keep `.env` private and never upload it to GitHub.
+Put one in `TOKEN_SECRET`, the other in `ADMIN_API_KEY`. Create a salted hash for your own six-digit owner PIN with Node.js (replace the example PIN with your own; do not use `123456`):
+
+```sh
+node -e "const c=require('node:crypto');const p='REPLACE_WITH_YOUR_6_DIGIT_PIN';const s=c.randomBytes(16).toString('hex');console.log(s+':'+c.scryptSync(p,s,64).toString('hex'))"
+```
+
+Put the printed `salt:hash` value in `ADMIN_PIN_HASH`. Keep `.env` private and never upload it to GitHub. The PIN itself must never be committed or sent in chat.
 
 Start the API:
 
@@ -136,8 +142,7 @@ The payment number is intentionally blank by default; configure it through the p
 
 ## Admin Dashboard (new)
 
-After deploying the membership API behind HTTPS, open `https://YOUR_API_HOST/admin/`.
-Enter the server-side `ADMIN_API_KEY` in the dashboard, load the saved settings, then update payment display details or plan prices/quotas and save. The dashboard calls the protected `GET /api/admin/settings` and `PUT /api/admin/settings` routes; the key is not compiled into the Android app. Keep the admin key private and use the dashboard only over HTTPS.
+After deploying the membership API behind HTTPS, open `https://YOUR_API_HOST/admin/`. Enter the owner's six-digit PIN. The server verifies its salted scrypt hash (`ADMIN_PIN_HASH`) and issues a signed admin session that expires after 30 minutes. The dashboard uses this short-lived bearer token for protected settings routes; it does not store the PIN or embed the admin key in the Android APK. Use HTTPS only, keep the PIN private, and press **Funga Admin** when finished. Login attempts are rate-limited. The legacy `ADMIN_API_KEY` remains available for trusted server-side maintenance tools only.
 
 The API also exposes `GET /api/payment-settings` for public payment instructions. `GET /api/plans` now reads the configured plan values. Only supported payment method labels can be selected. These settings do not process or verify payments. Manual transaction review remains required until an official merchant checkout and signed webhook integration is implemented.
 
@@ -172,3 +177,12 @@ Login and registration attempts are rate-limited. This container setup is a depl
 - `GET /api/orders` — includes each order's checkout URL and status.
 
 The API uses Node.js 20+ built-in `fetch`; no additional payment SDK is required.
+
+
+## Owner Admin Lock (new)
+
+- `POST /api/admin/login` accepts `{ "pin": "six digits" }` and checks the server-only `ADMIN_PIN_HASH`.
+- Successful login returns a signed admin token valid for 30 minutes. Protected admin endpoints accept it as `Authorization: Bearer <token>`.
+- The dashboard at `/admin/` now has an owner PIN lock and a manual lock button.
+- If `ADMIN_PIN_HASH` is blank, PIN login is disabled. Configure it on the VPS before using the dashboard. Never put the PIN or its hash in the APK or GitHub.
+- This protects the management dashboard; it does not yet add customer accounts, WireGuard peer provisioning, or in-app admin screens.
