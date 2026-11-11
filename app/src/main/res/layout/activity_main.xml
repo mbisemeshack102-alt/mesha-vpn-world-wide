@@ -2,63 +2,182 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0B1424"
+    android:background="#050F20"
     android:fillViewport="true">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="24dp">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textColor="#FFFFFF"
-            android:textSize="32sp"
-            android:textStyle="bold" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="@string/tagline"
-            android:textColor="#AAB9CC"
-            android:textSize="14sp" />
-        <TextView
-            android:id="@+id/connectionStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:text="@string/disconnected"
-            android:textColor="#F5C46A"
-            android:textSize="16sp" />
-        <EditText
-            android:id="@+id/configInput"
+        android:paddingStart="22dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="22dp"
+        android:paddingBottom="28dp">
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="240dp"
-            android:layout_marginTop="24dp"
-            android:backgroundTint="#42C995"
-            android:gravity="top|start"
-            android:hint="@string/config_hint"
-            android:inputType="textMultiLine|textNoSuggestions"
-            android:padding="14dp"
-            android:scrollbars="vertical"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#AAB9CC"
-            android:textSize="12sp"
-            android:typeface="monospace" />
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:contentDescription="KEM VPN shield logo"
+                android:src="@drawable/kem_shield" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="KEM VPN"
+                    android:textColor="#FFFFFF"
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tagline"
+                    android:textColor="#A9BEDA"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="260dp"
+            android:layout_height="260dp"
+            android:layout_marginTop="34dp"
+            android:background="@drawable/bg_status_ring">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical">
+                <ImageView
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:contentDescription="VPN security shield"
+                    android:src="@drawable/kem_shield" />
+                <TextView
+                    android:id="@+id/connectionStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/disconnected"
+                    android:textColor="#FF6B75"
+                    android:textSize="23sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Tap Connect to start VPN"
+                    android:textColor="#C3D4E9"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            android:background="@drawable/bg_panel"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="18dp">
+            <TextView
+                android:layout_width="48dp"
+                android:layout_height="wrap_content"
+                android:text="◉"
+                android:textColor="#12BFFF"
+                android:textSize="34sp"
+                android:textStyle="bold" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Your Privacy is Our Priority"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Browse Freely  •  Stay Secure"
+                    android:textColor="#C3D4E9"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:background="@drawable/bg_profile_panel"
+            android:orientation="vertical"
+            android:padding="18dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="▤  WireGuard Profile"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+            <EditText
+                android:id="@+id/configInput"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_profile_input"
+                android:gravity="top|start"
+                android:hint="@string/config_hint"
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:padding="16dp"
+                android:scrollbars="vertical"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#91B1D8"
+                android:textSize="14sp"
+                android:typeface="monospace" />
+        </LinearLayout>
+
         <Button
             android:id="@+id/connectButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/connect" />
+            android:layout_height="62dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_connect_button"
+            android:backgroundTint="@null"
+            android:text="@string/connect"
+            android:textAllCaps="true"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="22dp"
+            android:background="@drawable/bg_panel"
+            android:padding="16dp"
             android:text="@string/config_note"
-            android:textColor="#AAB9CC"
+            android:textColor="#C3D4E9"
             android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="KEM VPN   •   FAST   •   RELIABLE   •   SECURE"
+            android:textColor="#7DDCFF"
+            android:textSize="11sp"
+            android:textStyle="bold" />
     </LinearLayout>
 </ScrollView>
