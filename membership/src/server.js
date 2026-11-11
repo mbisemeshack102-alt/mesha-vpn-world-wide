@@ -48,6 +48,8 @@ db.exec(`
     amount_tzs INTEGER NOT NULL,
     status TEXT NOT NULL CHECK(status IN ('pending','paid','rejected')),
     payment_reference TEXT UNIQUE,
+    checkout_url TEXT,
+    provider_payment_reference TEXT,
     created_at TEXT NOT NULL,
     paid_at TEXT
   );
@@ -66,6 +68,10 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sub_user_expiry ON subscriptions(user_id, expires_at);
 `);
 
+const orderColumns = db.prepare('PRAGMA table_info(orders)').all().map(column => column.name);
+if (!orderColumns.includes('checkout_url')) db.exec('ALTER TABLE orders ADD COLUMN checkout_url TEXT');
+if (!orderColumns.includes('provider_payment_reference')) db.exec('ALTER TABLE orders ADD COLUMN provider_payment_reference TEXT');
+
 const PLANS = {
   bronze: { name: 'Bronze', speedMbps: 2, devices: 1, data: { day: 1, week: 2, month: 10 }, price: { day: 500, week: 1500, month: 5000 } },
   silver: { name: 'Silver', speedMbps: 5, devices: 2, data: { day: 2, week: 5, month: 25 }, price: { day: 1000, week: 3000, month: 10000 } },
@@ -75,7 +81,7 @@ const PLANS = {
 const DURATIONS = { day: 1, week: 7, month: 30 };
 
 const DEFAULT_PAYMENT_SETTINGS = {
-  provider: 'manual_airtel',
+  provider: process.env.PAYMENT_PROVIDER || 'manual_review',
   airtelLipaNumber: '',
   recipientName: '',
   enabledMethods: ['airtel_money'],
@@ -171,6 +177,80 @@ function currentSubscription(userId) {
   return sub || null;
 }
 
+let clickPesaToken = '';
+let clickPesaTokenExpiresAt = 0;
+async function getClickPesaToken() {
+  if (clickPesaToken && Date.now() < clickPesaTokenExpiresAt) return clickPesaToken;
+  const clientId = process.env.CLICKPESA_CLIENT_ID;
+  const apiKey = process.env.CLICKPESA_API_KEY;
+  if (!clientId || !apiKey) throw new Error('ClickPesa merchant credentials are not configured.');
+  const response = await fetch('https://api.clickpesa.com/third-parties/generate-token', {
+    method: 'POST', headers: { 'client-id': clientId, 'api-key': apiKey }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || typeof data.token !== 'string') throw new Error('ClickPesa token request failed: ' + (data.message || response.status));
+  clickPesaToken = data.token.startsWith('Bearer ') ? data.token : 'Bearer ' + data.token;
+  clickPesaTokenExpiresAt = Date.now() + 55 * 60 * 1000;
+  return clickPesaToken;
+}
+async function clickPesaRequest(url, options = {}) {
+  const token = await getClickPesaToken();
+  const response = await fetch(url, { ...options, headers: { Authorization: token, ...(options.headers || {}) } });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error('ClickPesa request failed: ' + (data.message || response.status));
+  return data;
+}
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === 'object') return Object.keys(value).sort().reduce((out, key) => {
+    if (key !== 'checksum' && key !== 'checksumMethod') out[key] = canonicalize(value[key]);
+    return out;
+  }, {});
+  return value;
+}
+function verifyClickPesaChecksum(payload) {
+  const key = process.env.CLICKPESA_CHECKSUM_KEY;
+  if (!key) return true;
+  if (!payload.checksum) return false;
+  const expected = crypto.createHmac('sha256', key).update(JSON.stringify(canonicalize(payload))).digest('hex');
+  const supplied = Buffer.from(String(payload.checksum));
+  const calculated = Buffer.from(expected);
+  return supplied.length === calculated.length && crypto.timingSafeEqual(supplied, calculated);
+}
+function activatePaidOrder(order, paymentReference) {
+  const start = new Date();
+  const expiry = addDuration(start, order.duration);
+  const plan = currentPlans()[order.plan_id];
+  if (!plan) throw new Error('Order plan no longer exists.');
+  return db.transaction(() => {
+    const result = db.prepare("UPDATE orders SET status='paid', payment_reference=?, provider_payment_reference=?, paid_at=? WHERE id=? AND status='pending'")
+      .run(paymentReference, paymentReference, start.toISOString(), order.id);
+    if (result.changes !== 1) return false;
+    db.prepare("INSERT INTO subscriptions(user_id,plan_id,duration,data_gb,device_limit,speed_mbps,starts_at,expires_at,status) VALUES(?,?,?,?,?,?,?,?, 'active')")
+      .run(order.user_id, order.plan_id, order.duration, plan.data[order.duration], plan.devices, plan.speedMbps, start.toISOString(), expiry.toISOString());
+    return true;
+  })();
+}
+async function verifyAndActivateClickPesaOrder(orderReference, webhookData) {
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderReference);
+  if (!order) throw new Error('Unknown KEM VPN order reference.');
+  if (order.status === 'paid') return { alreadyPaid: true };
+  const result = await clickPesaRequest('https://api.clickpesa.com/third-parties/payments/' + encodeURIComponent(orderReference));
+  const payment = Array.isArray(result) ? result[0] : result;
+  if (!payment || payment.status !== 'SUCCESS' || String(payment.orderReference) !== order.id ||
+      String(payment.collectedCurrency).toUpperCase() !== 'TZS' ||
+      Math.round(Number(payment.collectedAmount)) !== order.amount_tzs) {
+    throw new Error('ClickPesa payment is not verified as the exact successful TZS order.');
+  }
+  if (webhookData && webhookData.paymentReference && String(webhookData.paymentReference) !== String(payment.paymentReference)) {
+    throw new Error('Webhook payment reference does not match ClickPesa status.');
+  }
+  const reference = String(payment.paymentReference || '');
+  if (!reference) throw new Error('ClickPesa did not return a payment reference.');
+  activatePaidOrder(order, reference);
+  return { alreadyPaid: false };
+}
+
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'KEM VPN Membership API' }));
 app.get('/api/plans', (_req, res) => {
   const plans = currentPlans();
@@ -259,23 +339,69 @@ app.get('/api/me', auth, (req, res) => {
   res.json({ user: req.user, subscription });
 });
 
-app.post('/api/orders', auth, (req, res) => {
-  const planId = String(req.body.planId || '').toLowerCase();
-  const duration = String(req.body.duration || '').toLowerCase();
-  const plan = currentPlans()[planId];
-  if (!plan || !DURATIONS[duration]) return res.status(400).json({ error: 'Choose a valid plan and duration: day, week, or month.' });
-  const id = 'KEM-' + crypto.randomBytes(8).toString('hex').toUpperCase();
-  const amount = plan.price[duration];
-  db.prepare(`INSERT INTO orders(id,user_id,plan_id,duration,amount_tzs,status,created_at)
-    VALUES(?,?,?,?,?,'pending',?)`).run(id, req.user.id, planId, duration, amount, nowIso());
-  res.status(201).json({
-    order: { id, plan: plan.name, duration, amountTzs: amount, status: 'pending' },
-    payment: { provider: 'manual_review', message: 'Payment is not automated yet. Do not send money until KEM VPN publishes its official payment instructions.' }
-  });
+app.post('/api/orders', auth, async (req, res) => {
+  try {
+    const planId = String(req.body.planId || '').toLowerCase();
+    const duration = String(req.body.duration || '').toLowerCase();
+    const plan = currentPlans()[planId];
+    if (!plan || !DURATIONS[duration]) return res.status(400).json({ error: 'Choose a valid plan and duration: day, week, or month.' });
+    if ((process.env.PAYMENT_PROVIDER || 'manual_review') !== 'clickpesa') {
+      return res.status(503).json({ error: 'Automatic payments are not enabled. KEM VPN is not accepting payments yet.' });
+    }
+    if (!process.env.CLICKPESA_CLIENT_ID || !process.env.CLICKPESA_API_KEY ||
+        !process.env.PUBLIC_BASE_URL || !process.env.PUBLIC_BASE_URL.startsWith('https://')) {
+      return res.status(503).json({ error: 'ClickPesa credentials and a public HTTPS API URL must be configured first.' });
+    }
+    const id = 'KEM' + crypto.randomBytes(10).toString('hex').toUpperCase();
+    const amount = Number(plan.price[duration]);
+    if (!Number.isInteger(amount) || amount < 1) return res.status(400).json({ error: 'This plan price is not valid for checkout.' });
+    db.prepare("INSERT INTO orders(id,user_id,plan_id,duration,amount_tzs,status,created_at) VALUES(?,?,?,?,?,'pending',?)")
+      .run(id, req.user.id, planId, duration, amount, nowIso());
+    const callbackUrl = process.env.PUBLIC_BASE_URL.replace(/\/$/, '') + '/api/payments/clickpesa/webhook';
+    const checkoutPayload = {
+      totalPrice: String(amount), orderReference: id, orderCurrency: 'TZS',
+      customerName: 'KEM VPN Customer', customerPhone: req.user.phone,
+      description: 'KEM VPN ' + plan.name + ' ' + duration + ' membership', callbackUrl
+    };
+    if (process.env.CLICKPESA_CHECKSUM_KEY) {
+      checkoutPayload.checksum = crypto.createHmac('sha256', process.env.CLICKPESA_CHECKSUM_KEY)
+        .update(JSON.stringify(canonicalize(checkoutPayload))).digest('hex');
+    }
+    const checkout = await clickPesaRequest('https://api.clickpesa.com/third-parties/checkout-link/generate-checkout-url', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(checkoutPayload)
+    });
+    if (!checkout.checkoutLink || !checkout.checkoutLink.startsWith('https://')) throw new Error('ClickPesa did not return a valid hosted checkout link.');
+    db.prepare('UPDATE orders SET checkout_url=? WHERE id=?').run(checkout.checkoutLink, id);
+    res.status(201).json({
+      order: { id, plan: plan.name, duration, amountTzs: amount, status: 'pending' },
+      payment: { provider: 'clickpesa', checkoutUrl: checkout.checkoutLink }
+    });
+  } catch (error) {
+    console.error('Order checkout error:', error.message);
+    res.status(502).json({ error: 'Could not start secure ClickPesa checkout. Please try again later.' });
+  }
+});
+
+app.post('/api/payments/clickpesa/webhook', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    if (!verifyClickPesaChecksum(payload)) return res.status(401).json({ error: 'Invalid ClickPesa checksum.' });
+    const event = payload.event || payload.eventType;
+    const data = payload.data || {};
+    if (event === 'PAYMENT FAILED') return res.status(200).json({ received: true });
+    if (event !== 'PAYMENT RECEIVED' || data.status !== 'SUCCESS' || !data.orderReference) {
+      return res.status(400).json({ error: 'Unsupported or incomplete payment event.' });
+    }
+    const result = await verifyAndActivateClickPesaOrder(String(data.orderReference), data);
+    res.status(200).json({ received: true, activated: !result.alreadyPaid });
+  } catch (error) {
+    console.error('ClickPesa webhook verification failed:', error.message);
+    res.status(400).json({ error: 'Payment notification could not be verified.' });
+  }
 });
 
 app.get('/api/orders', auth, (req, res) => {
-  const orders = db.prepare('SELECT id,plan_id,duration,amount_tzs,status,payment_reference,created_at,paid_at FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT 50').all(req.user.id);
+  const orders = db.prepare('SELECT id,plan_id,duration,amount_tzs,status,payment_reference,checkout_url,created_at,paid_at FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT 50').all(req.user.id);
   res.json({ orders });
 });
 
@@ -286,15 +412,7 @@ app.post('/api/admin/orders/:id/confirm', adminOnly, (req, res) => {
   const reference = String(req.body.paymentReference || '').trim();
   if (!order) return res.status(404).json({ error: 'Pending order not found.' });
   if (!reference || reference.length > 100) return res.status(400).json({ error: 'A valid payment reference is required.' });
-  const plan = currentPlans()[order.plan_id];
-  const start = new Date();
-  const expiry = addDuration(start, order.duration);
-  const activate = db.transaction(() => {
-    db.prepare("UPDATE orders SET status='paid', payment_reference=?, paid_at=? WHERE id=? AND status='pending'").run(reference, start.toISOString(), order.id);
-    db.prepare(`INSERT INTO subscriptions(user_id,plan_id,duration,data_gb,device_limit,speed_mbps,starts_at,expires_at,status)
-      VALUES(?,?,?,?,?,?,?,?, 'active')`).run(order.user_id, order.plan_id, order.duration, plan.data[order.duration], plan.devices, plan.speedMbps, start.toISOString(), expiry.toISOString());
-  });
-  try { activate(); } catch (e) {
+  try { activatePaidOrder(order, reference); } catch (e) {
     if (String(e.code).startsWith('SQLITE_CONSTRAINT')) return res.status(409).json({ error: 'This payment reference has already been used.' });
     throw e;
   }
