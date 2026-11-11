@@ -68,3 +68,33 @@ ClickPesa advertises collections through M-Pesa, Airtel Money, Mixx by Yas, Halo
 6. Test with a small number of consenting users and confirm that the internet provider's terms permit the intended sharing/resale.
 
 Do not promise unlimited data or unlimited simultaneous users. The owner-side SIM/Wi-Fi relay architecture is also a separate task from this membership API.
+
+
+## Editable Admin settings (new)
+
+The API now includes persistent settings stored in SQLite:
+
+- `GET /api/payment-settings` — returns the currently configured public payment instructions.
+- `GET /api/admin/settings` — protected by `x-admin-key`; returns payment and plan settings.
+- `PUT /api/admin/settings` — protected by `x-admin-key`; updates the Airtel Lipa Namba, recipient name, payment methods, instructions, and Bronze/Silver/Gold/Platinum prices, speeds, device counts and data allowances.
+
+Example request body (send only from a trusted admin tool over HTTPS):
+
+```json
+{
+  "payment": {
+    "airtelLipaNumber": "YOUR_AIRTEL_LIPA_NUMBER",
+    "recipientName": "YOUR_REGISTERED_RECIPIENT_NAME",
+    "enabledMethods": ["airtel_money", "mpesa", "mixx_by_yas", "halopesa", "bank", "visa", "mastercard"],
+    "instructions": "Follow the displayed merchant payment instructions."
+  },
+  "plans": {
+    "bronze": {"name":"Bronze","speedMbps":2,"devices":1,"data":{"day":1,"week":2,"month":10},"price":{"day":500,"week":1500,"month":5000}},
+    "silver": {"name":"Silver","speedMbps":5,"devices":2,"data":{"day":2,"week":5,"month":25},"price":{"day":1000,"week":3000,"month":10000}},
+    "gold": {"name":"Gold","speedMbps":10,"devices":3,"data":{"day":4,"week":12,"month":60},"price":{"day":2000,"week":6000,"month":20000}},
+    "platinum": {"name":"Platinum","speedMbps":15,"devices":5,"data":{"day":8,"week":25,"month":120},"price":{"day":3500,"week":10500,"month":35000}}
+  }
+}
+```
+
+The payment number is intentionally blank by default; configure it through the protected admin endpoint after verifying the official Airtel merchant details. The enabled methods are display/configuration flags only: mobile-money, bank and card checkout are **not** automatically processed by this endpoint. ClickPesa merchant onboarding, checkout API integration and verified webhooks are still required before automatic payment activation. Never put the admin key or payment-provider secrets in the Android APK.
