@@ -1,0 +1,19 @@
+services:
+  kem-vpn-api:
+    build: .
+    container_name: kem-vpn-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: 8080
+      DATABASE_FILE: /app/data/kem-membership.sqlite
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - kem_vpn_data:/app/data
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  kem_vpn_data:
