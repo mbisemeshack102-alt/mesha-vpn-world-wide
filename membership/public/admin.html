@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="sw">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1424"><title>KEM VPN Admin</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1424;color:#edf4ff;font:16px system-ui,sans-serif}
+main{max-width:850px;margin:auto;padding:22px}.panel{background:#142238;border:1px solid #29405d;border-radius:16px;padding:18px;margin:16px 0}
+h1{margin:4px 0;color:#42c995}h2{font-size:19px;margin:0 0 14px}p,.muted{color:#aab9cc}
+label{display:block;margin:12px 0 6px;font-size:14px}input,textarea,button{width:100%;border-radius:9px;padding:12px;border:1px solid #3b526e;background:#0b1424;color:#fff;font:inherit}
+textarea{min-height:115px;resize:vertical}button{background:#42c995;color:#071a17;font-weight:700;border:0;margin-top:14px;cursor:pointer}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.methods{display:grid;grid-template-columns:1fr 1fr;gap:8px}.methods label{background:#0b1424;padding:9px;border-radius:8px;margin:0}
+#status{white-space:pre-wrap;color:#42c995}.danger{color:#ffcf8a}
+@media(max-width:560px){.row{grid-template-columns:1fr}main{padding:14px}}
+</style></head>
+<body><main>
+<h1>KEM VPN</h1><p>Admin Dashboard · Usimamizi wa malipo na vifurushi</p>
+<section class="panel"><h2>1. Ufunguo wa msimamizi</h2>
+<label for="key">ADMIN_API_KEY</label><input id="key" type="password" autocomplete="off" placeholder="Bandika admin key hapa">
+<button id="load">Fungua mipangilio</button><p class="muted">Ufunguo unabaki kwenye session ya browser hii tu. Usimpe mteja.</p></section>
+<section class="panel"><h2>2. Malipo</h2>
+<label for="lipa">Airtel Lipa Namba (hiari)</label><input id="lipa" maxlength="32">
+<label for="recipient">Jina la mpokeaji</label><input id="recipient" maxlength="100">
+<label for="instructions">Maelekezo kwa mteja</label><textarea id="instructions" maxlength="500"></textarea>
+<p>Njia zinazoonyeshwa kwa wateja:</p><div class="methods" id="methods">
+<label><input type="checkbox" value="airtel_money"> Airtel Money</label><label><input type="checkbox" value="mpesa"> M-Pesa</label>
+<label><input type="checkbox" value="mixx_by_yas"> Mixx by Yas</label><label><input type="checkbox" value="halopesa"> HaloPesa</label>
+<label><input type="checkbox" value="bank"> Benki</label><label><input type="checkbox" value="visa"> Visa</label><label><input type="checkbox" value="mastercard"> Mastercard</label></div></section>
+<section class="panel"><h2>3. Vifurushi na bei</h2><p class="muted">Badilisha JSON hii kwa uangalifu. Bei ni TZS; data ni GB.</p>
+<textarea id="plans" spellcheck="false"></textarea>
+<button id="save">Hifadhi mipangilio</button><p id="status" role="status"></p>
+</section><p class="danger">Tahadhari: Dashboard hii husanidi taarifa tu. Haifanyi malipo ya moja kwa moja, haithibitishi miamala, na haijawashi WireGuard peer automatically. Thibitisha malipo kwenye mfumo rasmi wa mfanyabiashara.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const defaults={
+bronze:{name:"Bronze",speedMbps:2,devices:1,data:{day:1,week:2,month:10},price:{day:500,week:1500,month:5000}},
+silver:{name:"Silver",speedMbps:5,devices:2,data:{day:2,week:5,month:25},price:{day:1000,week:3000,month:10000}},
+gold:{name:"Gold",speedMbps:10,devices:3,data:{day:4,week:12,month:60},price:{day:2000,week:6000,month:20000}},
+platinum:{name:"Platinum",speedMbps:15,devices:5,data:{day:8,week:25,month:120},price:{day:3500,week:10500,month:35000}}
+};
+function headers(){return {'content-type':'application/json','x-admin-key':$('key').value.trim()}}
+async function request(url,options={}){const r=await fetch(url,{...options,headers:{...headers(),...(options.headers||{})}});const data=await r.json();if(!r.ok)throw Error(data.error||'Ombi limeshindikana');return data}
+$('load').onclick=async()=>{try{$('key').value=$('key').value.trim();const d=await request('/api/admin/settings');const p=d.payment||{};$('lipa').value=p.airtelLipaNumber||'';$('recipient').value=p.recipientName||'';$('instructions').value=p.instructions||'';document.querySelectorAll('#methods input').forEach(c=>c.checked=(p.enabledMethods||[]).includes(c.value));$('plans').value=JSON.stringify(d.plans||defaults,null,2);$('status').textContent='Mipangilio imefunguliwa.'}catch(e){$('status').textContent=e.message}};
+$('save').onclick=async()=>{try{const plans=JSON.parse($('plans').value);const enabledMethods=[...document.querySelectorAll('#methods input:checked')].map(c=>c.value);const data={payment:{airtelLipaNumber:$('lipa').value,recipientName:$('recipient').value,instructions:$('instructions').value,enabledMethods},plans};const result=await request('/api/admin/settings',{method:'PUT',body:JSON.stringify(data)});$('status').textContent=result.message||'Imehifadhiwa.'}catch(e){$('status').textContent='Hitilafu: '+e.message}};
+</script></body></html>
