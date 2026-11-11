@@ -163,7 +163,8 @@ function currentSubscription(userId) {
 
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'KEM VPN Membership API' }));
 app.get('/api/plans', (_req, res) => {
-  const result = Object.entries(PLANS).map(([id, p]) => ({
+  const plans = currentPlans();
+  const result = Object.entries(plans).map(([id, p]) => ({
     id, name: p.name, speedMbps: p.speedMbps, devices: p.devices,
     offers: Object.keys(DURATIONS).map(duration => ({
       duration, days: DURATIONS[duration], priceTzs: p.price[duration], dataGb: p.data[duration]
@@ -171,6 +172,55 @@ app.get('/api/plans', (_req, res) => {
   }));
   res.json({ currency: 'TZS', plans: result, pricesAreDraft: true });
 });
+app.get('/api/payment-settings', (_req, res) => res.json(publicPaymentSettings()));
+app.get('/api/admin/settings', adminOnly, (_req, res) => {
+  res.json({ payment: readSetting('payment', DEFAULT_PAYMENT_SETTINGS), plans: currentPlans() });
+});
+app.put('/api/admin/settings', adminOnly, (req, res) => {
+  const body = req.body || {};
+  const payment = body.payment;
+  const plans = body.plans;
+  const allowedMethods = new Set(['airtel_money','mpesa','mixx_by_yas','halopesa','bank','visa','mastercard']);
+  if (!payment || typeof payment !== 'object' || !plans || typeof plans !== 'object') {
+    return res.status(400).json({ error: 'Payment and plans settings are required.' });
+  }
+  const methods = Array.isArray(payment.enabledMethods) ? [...new Set(payment.enabledMethods)] : [];
+  if (methods.some(method => !allowedMethods.has(method))) return res.status(400).json({ error: 'Unsupported payment method.' });
+  const number = String(payment.airtelLipaNumber || '').trim();
+  const recipient = String(payment.recipientName || '').trim();
+  const instructions = String(payment.instructions || '').trim();
+  if (number.length > 32 || recipient.length > 100 || instructions.length > 500) {
+    return res.status(400).json({ error: 'Payment settings are too long.' });
+  }
+  const cleanPlans = {};
+  for (const id of ['bronze','silver','gold','platinum']) {
+    const p = plans[id];
+    if (!p || !p.price || !p.data) return res.status(400).json({ error: 'All four membership plans are required.' });
+    const name = String(p.name || '').trim();
+    const speedMbps = Number(p.speedMbps), devices = Number(p.devices);
+    if (!name || name.length > 30 || !Number.isInteger(speedMbps) || speedMbps < 1 || speedMbps > 1000 ||
+        !Number.isInteger(devices) || devices < 1 || devices > 20) {
+      return res.status(400).json({ error: 'Invalid plan name, speed, or device limit.' });
+    }
+    const price = {}, data = {};
+    for (const duration of Object.keys(DURATIONS)) {
+      price[duration] = Number(p.price[duration]);
+      data[duration] = Number(p.data[duration]);
+      if (!Number.isInteger(price[duration]) || price[duration] < 0 || price[duration] > 100000000 ||
+          !Number.isFinite(data[duration]) || data[duration] <= 0 || data[duration] > 100000) {
+        return res.status(400).json({ error: 'Invalid plan price or data allowance.' });
+      }
+    }
+    cleanPlans[id] = { name, speedMbps, devices, price, data };
+  }
+  writeSetting('payment', {
+    provider: 'manual_review', airtelLipaNumber: number, recipientName: recipient,
+    enabledMethods: methods, instructions
+  });
+  writeSetting('plans', cleanPlans);
+  res.json({ ok: true, message: 'Settings saved.' });
+});
+app.use('/admin', express.static(path.join(__dirname, '../public'), { index: 'admin.html' }));
 
 app.post('/api/register', (req, res) => {
   const phone = normalizePhone(req.body.phone);
