@@ -1,0 +1,6 @@
+.env
+membership/.env
+membership/data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
