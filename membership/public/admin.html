@@ -6,9 +6,9 @@
 <link rel="stylesheet" href="/admin/admin.css"></head>
 <body><main>
 <h1>KEM VPN</h1><p>Admin Dashboard · Usimamizi wa malipo na vifurushi</p>
-<section class="panel"><h2>1. Ufunguo wa msimamizi</h2>
-<label for="key">ADMIN_API_KEY</label><input id="key" type="password" autocomplete="off" placeholder="Bandika admin key hapa">
-<button id="load">Fungua mipangilio</button><p class="muted">Ufunguo unabaki kwenye session ya browser hii tu. Usimpe mteja.</p></section>
+<section class="panel"><h2>1. Kufuli la msimamizi</h2>
+<label for="pin">PIN ya mmiliki (tarakimu 6)</label><input id="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" placeholder="Ingiza PIN yako ya siri">
+<button id="unlock">Fungua Admin</button><button id="lock" type="button">Funga Admin</button><p class="muted">PIN inathibitishwa na seva. Session inaisha baada ya dakika 30. Usimpe mtu PIN yako.</p></section>
 <section class="panel"><h2>2. Malipo</h2>
 <label for="lipa">Airtel Lipa Namba (hiari)</label><input id="lipa" maxlength="32">
 <label for="recipient">Jina la mpokeaji</label><input id="recipient" maxlength="100">
