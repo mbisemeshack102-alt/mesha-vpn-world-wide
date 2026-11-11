@@ -157,10 +157,30 @@ function auth(req, res, next) {
     next();
   } catch { return res.status(401).json({ error: 'Invalid token' }); }
 }
+function makeAdminToken() {
+  const payload = Buffer.from(JSON.stringify({ role: 'admin', exp: Date.now() + 30 * 60 * 1000 })).toString('base64url');
+  const signature = crypto.createHmac('sha256', TOKEN_SECRET).update(payload).digest('base64url');
+  return payload + '.' + signature;
+}
+function verifyAdminToken(token) {
+  const [payload, signature] = String(token || '').split('.');
+  if (!payload || !signature) return false;
+  const expected = crypto.createHmac('sha256', TOKEN_SECRET).update(payload).digest();
+  let supplied;
+  try { supplied = Buffer.from(signature, 'base64url'); } catch { return false; }
+  if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return false;
+  try {
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
+    return data.role === 'admin' && data.exp > Date.now();
+  } catch { return false; }
+}
 function adminOnly(req, res, next) {
-  const supplied = Buffer.from(String(req.headers['x-admin-key'] || ''));
+  const legacyKey = String(req.headers['x-admin-key'] || '');
   const expected = Buffer.from(ADMIN_API_KEY);
-  if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return res.status(403).json({ error: 'Admin access denied' });
+  const supplied = Buffer.from(legacyKey);
+  const keyOk = supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
+  const bearer = String(req.headers.authorization || '').replace(/^Bearer\\s+/i, '');
+  if (!keyOk && !verifyAdminToken(bearer)) return res.status(403).json({ error: 'Admin access denied or session expired' });
   next();
 }
 function addDuration(date, duration) {
@@ -332,6 +352,14 @@ app.post('/api/login', authAttemptLimiter, (req, res) => {
   const user = phone && db.prepare('SELECT id,phone,password_hash FROM users WHERE phone = ?').get(phone);
   if (!user || !verifyPassword(password, user.password_hash)) return res.status(401).json({ error: 'Phone number or password is incorrect.' });
   res.json({ user: { id: user.id, phone: user.phone }, token: makeToken(user) });
+});
+
+app.post('/api/admin/login', authAttemptLimiter, (req, res) => {
+  const configuredHash = process.env.ADMIN_PIN_HASH || '';
+  const pin = String(req.body.pin || '');
+  if (!configuredHash || !/^\\d{6}$/.test(pin)) return res.status(503).json({ error: 'Admin PIN is not configured on the server.' });
+  if (!verifyPassword(pin, configuredHash)) return res.status(401).json({ error: 'Admin PIN is incorrect.' });
+  res.json({ token: makeAdminToken(), expiresInSeconds: 1800 });
 });
 
 app.get('/api/me', auth, (req, res) => {
