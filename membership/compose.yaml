@@ -8,6 +8,7 @@ services:
     environment:
       PORT: 8080
       DATABASE_FILE: /app/data/kem-membership.sqlite
+      TRUST_PROXY_HOPS: 1
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
