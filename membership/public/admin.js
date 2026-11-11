@@ -5,7 +5,7 @@ function headers(){return {'content-type':'application/json','authorization':'Be
 async function request(url,options={}){const r=await fetch(url,{...options,headers:{...headers(),...(options.headers||{})}});const data=await r.json();if(!r.ok)throw Error(data.error||'Ombi limeshindikana');return data}
 $('unlock').addEventListener('click',async()=>{
   const pin=$('pin').value.trim();
-  if(!/^\\d{6}$/.test(pin)){$('status').textContent='PIN iwe na tarakimu 6.';return}
+  if(!/^\d{6}$/.test(pin)){$('status').textContent='PIN iwe na tarakimu 6.';return}
   try{
     const r=await fetch('/api/admin/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin})});
     const d=await r.json();if(!r.ok)throw Error(d.error||'PIN haijakubaliwa');
