@@ -1,0 +1,19 @@
+{
+  "name": "kem-vpn-membership-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "KEM VPN plans, accounts, orders and subscription activation API",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "express-rate-limit": "^7.5.0"
+  }
+}

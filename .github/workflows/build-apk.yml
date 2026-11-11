@@ -1,0 +1,45 @@
+name: Build KEM VPN APK
+on:
+  push:
+    branches: [main, kem-vpn-foundation]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install API dependencies and check syntax
+        run: |
+          npm install --prefix membership --omit=dev
+          node --check membership/src/server.js
+          node --check membership/public/admin.js
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Check backend JavaScript syntax
+        run: |
+          node --check membership/src/server.js
+          node --check membership/public/admin.js
+      - name: Build debug APK
+        run: gradle --no-daemon assembleDebug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kem-vpn-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

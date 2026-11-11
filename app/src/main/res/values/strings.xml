@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KEM VPN</string>
+    <string name="tagline">Secure connectivity, wherever you are</string>
+    <string name="connect">CONNECT</string>
+    <string name="disconnect">DISCONNECT</string>
+    <string name="connecting">Connecting to VPN…</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="connection_failed">Connection failed</string>
+    <string name="paste_config_first">Paste your WireGuard profile first.</string>
+    <string name="vpn_permission_denied">VPN permission was not granted.</string>
+    <string name="invalid_config">Invalid WireGuard profile: %1$s</string>
+    <string name="config_hint">Paste your private WireGuard client profile here…</string>
+    <string name="config_note">Get a client profile from your KEM VPN server administrator. Your profile contains a private key: keep it secret and never post it publicly or commit it to GitHub. This app does not create internet service by itself; a configured WireGuard server is required.</string>
+</resources>

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="sw">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1424"><title>KEM VPN Admin</title>
+<link rel="stylesheet" href="/admin/admin.css"></head>
+<body><main>
+<h1>KEM VPN</h1><p>Admin Dashboard · Usimamizi wa malipo na vifurushi</p>
+<section class="panel"><h2>1. Kufuli la msimamizi</h2>
+<label for="pin">PIN ya mmiliki (tarakimu 6)</label><input id="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" placeholder="Ingiza PIN yako ya siri">
+<button id="unlock">Fungua Admin</button><button id="lock" type="button">Funga Admin</button><p class="muted">PIN inathibitishwa na seva. Session inaisha baada ya dakika 30. Usimpe mtu PIN yako.</p></section>
+<section class="panel"><h2>2. Malipo</h2>
+<label for="lipa">Airtel Lipa Namba (hiari)</label><input id="lipa" maxlength="32">
+<label for="recipient">Jina la mpokeaji</label><input id="recipient" maxlength="100">
+<label for="instructions">Maelekezo kwa mteja</label><textarea id="instructions" maxlength="500"></textarea>
+<p>Njia zinazoonyeshwa kwa wateja:</p><div class="methods" id="methods">
+<label><input type="checkbox" value="airtel_money"> Airtel Money</label><label><input type="checkbox" value="mpesa"> M-Pesa</label>
+<label><input type="checkbox" value="mixx_by_yas"> Mixx by Yas</label><label><input type="checkbox" value="halopesa"> HaloPesa</label>
+<label><input type="checkbox" value="bank"> Benki</label><label><input type="checkbox" value="visa"> Visa</label><label><input type="checkbox" value="mastercard"> Mastercard</label></div></section>
+<section class="panel"><h2>3. Vifurushi na bei</h2><p class="muted">Badilisha JSON hii kwa uangalifu. Bei ni TZS; data ni GB.</p>
+<textarea id="plans" spellcheck="false"></textarea>
+<button id="save">Hifadhi mipangilio</button><p id="status" role="status"></p>
+</section><p class="danger">Tahadhari: Dashboard hii husanidi taarifa tu. Haifanyi malipo ya moja kwa moja, haithibitishi miamala, na haijawashi WireGuard peer automatically. Thibitisha malipo kwenye mfumo rasmi wa mfanyabiashara.</p>
+</main>
+<script src="/admin/admin.js" defer></script></body></html>
