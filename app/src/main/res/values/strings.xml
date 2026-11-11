@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KEM VPN</string>
+    <string name="tagline">Secure connectivity, wherever you are</string>
+    <string name="connect">CONNECT</string>
+    <string name="server_not_configured">VPN server not configured</string>
+    <string name="setup_required">A VPN server and WireGuard profile must be configured before connecting.</string>
+    <string name="setup_note">Starter build only. VPN tunnelling will be enabled after the server and WireGuard integration are configured.</string>
+</resources>
