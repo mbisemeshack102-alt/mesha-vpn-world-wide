@@ -10,6 +10,8 @@ const path = require('node:path');
 
 const app = express();
 app.disable('x-powered-by');
+const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS || 0);
+if (Number.isInteger(trustProxyHops) && trustProxyHops > 0 && trustProxyHops <= 5) app.set('trust proxy', trustProxyHops);
 app.use(helmet());
 app.use(express.json({ limit: '20kb' }));
 const authAttemptLimiter = rateLimit({
