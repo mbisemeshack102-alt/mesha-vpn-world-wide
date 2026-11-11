@@ -106,3 +106,26 @@ After deploying the membership API behind HTTPS, open `https://YOUR_API_HOST/adm
 Enter the server-side `ADMIN_API_KEY` in the dashboard, load the saved settings, then update payment display details or plan prices/quotas and save. The dashboard calls the protected `GET /api/admin/settings` and `PUT /api/admin/settings` routes; the key is not compiled into the Android app. Keep the admin key private and use the dashboard only over HTTPS.
 
 The API also exposes `GET /api/payment-settings` for public payment instructions. `GET /api/plans` now reads the configured plan values. Only supported payment method labels can be selected. These settings do not process or verify payments. Manual transaction review remains required until an official merchant checkout and signed webhook integration is implemented.
+
+
+## Docker deployment (new)
+
+On an Ubuntu/Debian VPS with Docker Engine and the Docker Compose plugin installed:
+
+```sh
+cd membership
+cp .env.example .env
+openssl rand -hex 32
+openssl rand -hex 32
+```
+
+Put the first generated value in `TOKEN_SECRET` and the second in `ADMIN_API_KEY` inside `.env`. Keep this file private; it is excluded from the Docker build. Then run:
+
+```sh
+docker compose -f compose.yaml up -d --build
+docker compose -f compose.yaml logs -f
+```
+
+The API listens on the VPS loopback address at port 8080, with SQLite data in a persistent Docker volume. Put a reverse proxy such as Caddy or Nginx in front and enable HTTPS before exposing it publicly. Do not change the port binding to `0.0.0.0` unless a secure reverse proxy/firewall is configured. Check `http://127.0.0.1:8080/health` from the VPS. The admin page will be available at `https://YOUR_API_HOST/admin/` after HTTPS is configured.
+
+Login and registration attempts are rate-limited. This container setup is a deployment starter, not a substitute for TLS, backups, monitoring, firewall rules, security updates, and a tested restore plan.
