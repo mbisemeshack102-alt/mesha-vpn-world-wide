@@ -52,11 +52,45 @@ For production, run it behind HTTPS using a reverse proxy and a process manager.
 - `GET /api/orders` — authenticated order history
 - `POST /api/admin/orders/:id/confirm` — header `x-admin-key: <ADMIN_API_KEY>`, JSON: `{ "paymentReference": "verified-reference" }`
 
-## Payment gateway
+## Payment gateway — ClickPesa integration added
 
-Payment is deliberately **not automated yet**. Orders stay pending. Do not ask customers to send money to a personal number or activate service based only on a screenshot. An administrator must first verify a real transaction in the official merchant dashboard and then confirm the order using the protected admin route.
+The API now has a ClickPesa Hosted Checkout integration scaffold using the current official API:
+- Authenticates server-to-server using the ClickPesa Client ID and API Key; the JWT is cached in memory.
+- Creates a unique checkout link for each authenticated KEM VPN order.
+- Returns the hosted checkout URL to the app/client.
+- Receives `PAYMENT RECEIVED` and `PAYMENT FAILED` webhook events at `POST /api/payments/clickpesa/webhook`.
+- Before activating a subscription, independently queries ClickPesa's payment-status API and checks the exact order reference, SUCCESS status, TZS currency, amount and payment reference.
+- Uses an idempotent database transaction so duplicate callbacks do not create duplicate subscriptions.
+- Optionally verifies ClickPesa's HMAC-SHA256 webhook checksum when `CLICKPESA_CHECKSUM_KEY` is configured.
 
-ClickPesa advertises collections through M-Pesa, Airtel Money, Mixx by Yas, HaloPesa, cards and bank channels, plus API/webhook integration. Before enabling automatic activation, KEM VPN must obtain a merchant account and current API credentials, configure the provider's documented checkout and webhook flow, verify webhook authenticity/signatures, and reconcile the transaction amount, currency, order ID and final paid status on the server. API secrets must never be placed in the Android APK or GitHub. See https://clickpesa.com/payment-gateway/collection/ and https://docs.clickpesa.com/ .
+### Required ClickPesa setup
+
+1. Register KEM VPN as a merchant with ClickPesa and complete their business/KYC approval. The gateway's production API is not available until merchant onboarding is approved.
+2. In ClickPesa Dashboard → Settings → Developers, create a Hosted Checkout application and copy its Client ID and API Key. Configure the application webhook for `PAYMENT RECEIVED` and `PAYMENT FAILED`.
+3. Deploy this API on a public VPS domain with HTTPS. Set `PUBLIC_BASE_URL` to that exact HTTPS origin.
+4. Set `PAYMENT_PROVIDER=clickpesa`, `CLICKPESA_CLIENT_ID`, and `CLICKPESA_API_KEY` in the VPS environment. If checksum verification is enabled in ClickPesa, also set `CLICKPESA_CHECKSUM_KEY` to the same secret configured there.
+5. Restart the API. Make a small real payment after ClickPesa approves the account, then confirm the webhook and order status in the merchant dashboard and KEM VPN database.
+
+Example environment values (placeholders only):
+
+```env
+PAYMENT_PROVIDER=clickpesa
+PUBLIC_BASE_URL=https://api.your-real-domain.tld
+CLICKPESA_CLIENT_ID=your_client_id
+CLICKPESA_API_KEY=your_private_api_key
+CLICKPESA_CHECKSUM_KEY=your_checksum_key_if_enabled
+```
+
+Do not commit real values, send API keys in chat, or place them in the Android APK. Add them only to the VPS's private environment file. The example `.env.example` intentionally contains blanks.
+
+Until merchant approval, valid credentials, HTTPS deployment and a real payment test are complete, keep `PAYMENT_PROVIDER=manual_review`. In that mode the API refuses to create paid checkout orders; it does not pretend payments are live. The existing Airtel Lipa Namba settings are display-only and are not an automatic API integration.
+
+ClickPesa documents Hosted Checkout, token generation, payment status queries and webhooks here:
+- https://docs.clickpesa.com/api-reference/collection/generate-checkout-link/generate-checkout-link
+- https://docs.clickpesa.com/api-reference/authorization/generate-token
+- https://docs.clickpesa.com/api-reference/collection/querying-for-payments/querying-for-payments
+- https://docs.clickpesa.com/home/webhooks
+- https://docs.clickpesa.com/home/checksum
 
 ## Still required before launch
 
@@ -129,3 +163,12 @@ docker compose -f compose.yaml logs -f
 The API listens on the VPS loopback address at port 8080, with SQLite data in a persistent Docker volume. Put a reverse proxy such as Caddy or Nginx in front and enable HTTPS before exposing it publicly. Do not change the port binding to `0.0.0.0` unless a secure reverse proxy/firewall is configured. Check `http://127.0.0.1:8080/health` from the VPS. The admin page will be available at `https://YOUR_API_HOST/admin/` after HTTPS is configured.
 
 Login and registration attempts are rate-limited. This container setup is a deployment starter, not a substitute for TLS, backups, monitoring, firewall rules, security updates, and a tested restore plan.
+
+
+## ClickPesa payment API endpoints
+
+- `POST /api/orders` — authenticated JSON: `{ "planId": "bronze", "duration": "month" }`. With ClickPesa configured, returns `payment.checkoutUrl` for the hosted payment page.
+- `POST /api/payments/clickpesa/webhook` — public ClickPesa callback. It does not trust the browser return page; it queries ClickPesa's payment status before activating the membership.
+- `GET /api/orders` — includes each order's checkout URL and status.
+
+The API uses Node.js 20+ built-in `fetch`; no additional payment SDK is required.
