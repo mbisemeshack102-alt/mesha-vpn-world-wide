@@ -1,32 +1,49 @@
 # KEM VPN
 
-KEM VPN is an Android VPN client project. This milestone creates a buildable Android starter app and an automated APK build workflow.
+KEM VPN is an Android WireGuard client plus a starter VPS deployment path.
 
-## Current milestone
+## Android client status
 
-- Android application scaffold (Kotlin)
-- Starter connection screen
-- GitHub Actions workflow to build a debug APK
+- Kotlin Android app
+- Embedded official WireGuard tunnel library
+- Paste a client WireGuard profile
+- Android VPN permission prompt
+- Connect and disconnect actions
+- GitHub Actions debug APK build
 
-IMPORTANT: This starter APK is not yet a working VPN. The Connect button deliberately reports that server setup is required. Do not advertise or distribute it as providing VPN connectivity yet.
+The client can establish a real WireGuard tunnel **only after** a working server is deployed and a valid client profile is issued. The APK does not create internet access on its own.
 
-## Planned architecture
+## Build APK
 
-1. Android client using Android VPN APIs and the WireGuard tunnel implementation.
-2. A managed Linux VPS as the VPN exit server.
-3. An optional owner-controlled gateway for routing traffic from an authorized Wi-Fi or mobile-data connection.
-4. Backend service for issuing/revoking client configurations and managing accounts.
+Open the Actions tab and select **Build KEM VPN APK**. After the workflow succeeds, open its run and download the `kem-vpn-debug-apk` artifact. It contains `app-debug.apk`.
 
-A phone's SIM or Wi-Fi connection cannot automatically be shared with remote users just by installing a VPN app. The owner-side gateway, routing, public/reachable server path, and carrier/router support must be configured. Mobile operators may restrict tethering or commercial resale; confirm your plan permits it. User capacity depends on bandwidth and server resources, so unlimited accounts cannot mean unlimited simultaneous throughput.
+You can also build locally with JDK 17 and Gradle 8.9 using `gradle assembleDebug`.
 
-## Build the APK
+## Deploy a starter WireGuard exit server
 
-GitHub Actions runs the workflow named Build KEM VPN APK. After a successful run, open the workflow run, find Artifacts, and download kem-vpn-debug-apk.
+Use a fresh Ubuntu 22.04/24.04 VPS with a public IPv4 address. This VPS is the VPN exit point, so client traffic exits through the VPS internet connection.
 
-For a local build with JDK 17 and Gradle 8.9, run gradle assembleDebug.
+1. SSH into the VPS.
+2. Copy `server/setup-wireguard.sh` to the VPS and run `sudo bash setup-wireguard.sh`.
+3. Allow inbound UDP port 51820 in the VPS provider firewall/security group.
+4. Copy `server/add-peer.sh` to the VPS.
+5. Run `sudo bash add-peer.sh phone1 YOUR_VPS_PUBLIC_IP`.
+6. Transfer the generated file under `/root/kem-vpn-clients/` securely to the phone. Do not commit it to GitHub.
+7. Open KEM VPN, paste the complete profile, and press CONNECT.
 
-The debug APK is generated at app/build/outputs/apk/debug/app-debug.apk.
+The scripts create server keys only on the VPS and client keys only in the root-only client directory. Keep all keys private. Revoke a client by removing its peer from wg0 and the persistent config; do not simply share one profile among customers.
 
-## Next milestone
+## Important: phone data sharing vs VPS VPN
 
-Integrate the WireGuard tunnel engine, add secure server provisioning, and implement an owner-side gateway. Never commit private keys, server credentials, or user VPN configuration secrets to this repository.
+A normal Android VPN app cannot automatically re-share the phone's SIM/Wi-Fi internet to remote users. The setup above uses the VPS bandwidth and VPS internet as the exit. To make remote users exit through your own SIM/Wi-Fi, a separate always-on owner gateway and reverse/site-to-site tunnel are required; Android carrier NAT, tethering restrictions, battery limits and operator terms can prevent this. Do not assume a phone alone can serve unlimited remote users.
+
+## Capacity and cost
+
+"Free" can mean you do not charge users, but the VPS, bandwidth and maintenance still cost money. Unlimited registered accounts are not the same as unlimited simultaneous users or speed. Start with a small, authorized test group and monitor bandwidth.
+
+## Security
+
+- Never commit WireGuard .conf files, private keys, passwords, or server credentials.
+- Use one unique profile per user/device.
+- If a profile is exposed, revoke and replace it immediately.
+- Check local telecom and VPS provider terms before reselling or sharing connectivity.
