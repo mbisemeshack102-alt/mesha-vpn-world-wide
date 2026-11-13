@@ -35,6 +35,12 @@
     <string name="choose_method">اختر طريقة الدفع</string>
     <string name="payment_pending">هذا الخيار جاهز للعرض، لكن الدفع الفعلي غير مفعل بعد. يجب أولاً ربط بوابة دفع آمنة.</string>
     <string-array name="language_names"><item>Kiswahili</item><item>English</item><item>Français</item><item>Español</item><item>Português</item><item>العربية</item><item>हिन्दी</item><item>中文</item></string-array>
-    <string-array name="package_options"><item>يوم واحد</item><item>7 أيام</item><item>30 يوماً</item></string-array>
+    <string-array name="package_options">
+        <item>500 شلن تنزاني • 8 ساعات</item>
+        <item>1,000 شلن تنزاني • يوم واحد</item>
+        <item>2,000 شلن تنزاني • أسبوع واحد</item>
+        <item>4,000 شلن تنزاني • أسبوعان</item>
+        <item>15,000 شلن تنزاني • شهر واحد</item>
+    </string-array>
     <string-array name="payment_methods"><item>M-Pesa</item><item>Airtel Money</item><item>Mixx by Yas (Tigo Pesa)</item><item>HaloPesa</item><item>Visa / Mastercard</item></string-array>
 </resources>
