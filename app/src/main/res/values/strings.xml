@@ -16,6 +16,9 @@
     <string name="no_internet_transport">No internet connection detected</string>
     <string name="other_transport">Internet transport: Other network</string>
     <string name="profile_format_required">Paste a complete WireGuard profile with [Interface] and [Peer] sections. A number alone is not a profile.</string>
+    <string name="import_profile">CHAGUA FAILI LA VPN (.conf)</string>
+    <string name="profile_imported">WireGuard profile imported. Check it before connecting.</string>
+    <string name="profile_import_failed">Could not import profile: %1$s</string>
     <string name="config_hint">Paste your private WireGuard client profile here…</string>
     <string name="config_note">Get a client profile from your KEM VPN server administrator. Your profile contains a private key: keep it secret and never post it publicly or commit it to GitHub. This app does not create internet service by itself; a configured WireGuard server is required.</string>
 </resources>
