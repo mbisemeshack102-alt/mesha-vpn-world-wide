@@ -119,3 +119,13 @@ if (supabase) {
     if (data.session?.user) showAccount(data.session.user);
   });
 }
+
+
+// Installable PWA support (works on HTTPS hosting such as GitHub Pages).
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(error => {
+      console.warn('KEM VPN offline support could not be enabled:', error);
+    });
+  });
+}
