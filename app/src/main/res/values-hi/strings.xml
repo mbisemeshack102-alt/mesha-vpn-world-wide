@@ -35,6 +35,12 @@
     <string name="choose_method">भुगतान का तरीका चुनें</string>
     <string name="payment_pending">यह विकल्प तैयार है, लेकिन वास्तविक भुगतान अभी सक्षम नहीं है। पहले सुरक्षित भुगतान गेटवे जोड़ना होगा।</string>
     <string-array name="language_names"><item>Kiswahili</item><item>English</item><item>Français</item><item>Español</item><item>Português</item><item>العربية</item><item>हिन्दी</item><item>中文</item></string-array>
-    <string-array name="package_options"><item>1 दिन</item><item>7 दिन</item><item>30 दिन</item></string-array>
+    <string-array name="package_options">
+        <item>500 TSh • 8 घंटे</item>
+        <item>1,000 TSh • 1 दिन</item>
+        <item>2,000 TSh • 1 सप्ताह</item>
+        <item>4,000 TSh • 2 सप्ताह</item>
+        <item>15,000 TSh • 1 महीना</item>
+    </string-array>
     <string-array name="payment_methods"><item>M-Pesa</item><item>Airtel Money</item><item>Mixx by Yas (Tigo Pesa)</item><item>HaloPesa</item><item>Visa / Mastercard</item></string-array>
 </resources>
