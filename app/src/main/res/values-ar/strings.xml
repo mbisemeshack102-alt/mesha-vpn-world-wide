@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KEM VPN</string>
+    <string name="tagline">اتصال آمن أينما كنت</string>
+    <string name="connect">اتصال</string>
+    <string name="disconnect">قطع الاتصال</string>
+    <string name="connecting">جارٍ الاتصال بالشبكة…</string>
+    <string name="connected">متصل</string>
+    <string name="disconnected">غير متصل</string>
+    <string name="connection_failed">فشل الاتصال</string>
+    <string name="paste_config_first">ألصق ملف WireGuard أولاً.</string>
+    <string name="vpn_permission_denied">لم يتم منح إذن VPN.</string>
+    <string name="invalid_config">ملف WireGuard غير صالح: %1$s</string>
+    <string name="mobile_data_transport">الشبكة المستخدمة: بيانات الهاتف</string>
+    <string name="wifi_transport">الشبكة المستخدمة: Wi-Fi</string>
+    <string name="no_internet_transport">لا يوجد اتصال بالإنترنت</string>
+    <string name="other_transport">الشبكة المستخدمة: شبكة أخرى</string>
+    <string name="profile_format_required">أدخل ملف WireGuard كاملاً يحتوي على [Interface] و[Peer].</string>
+    <string name="import_profile">استيراد ملف VPN (.conf)</string>
+    <string name="profile_imported">تم استيراد الملف. راجعه قبل الاتصال.</string>
+    <string name="profile_import_failed">تعذر استيراد الملف: %1$s</string>
+    <string name="config_hint">ألصق ملف WireGuard الخاص هنا…</string>
+    <string name="config_note">احصل على ملف العميل من مسؤول خادم KEM VPN. يحتوي على مفتاح خاص: لا تشاركه علناً ولا ترفعه إلى GitHub. لا ينشئ هذا التطبيق اتصال الإنترنت بنفسه؛ بل يحتاج إلى خادم WireGuard صالح.</string>
+    <string name="privacy_title">خصوصيتك مهمة</string>
+    <string name="privacy_subtitle">تصفح بأمان • احمِ اتصالاتك</string>
+    <string name="connect_prompt">اضغط اتصال لبدء VPN</string>
+    <string name="profile_title">ملف WireGuard</string>
+    <string name="footer_text">KEM VPN • سريع • ثابت • آمن</string>
+    <string name="vpn_settings">إعدادات VPN في Android</string>
+    <string name="always_on_note">لتفعيل Kill Switch، افتح إعدادات Android واختر KEM VPN ثم فعّل VPN الدائم وحظر الاتصالات بدون VPN إن توفرت.</string>
+    <string name="language_button">اللغة</string>
+    <string name="choose_language">اختر لغة التطبيق</string>
+    <string name="payment_button">الباقات والدفع</string>
+    <string name="choose_package">اختر باقة اشتراك</string>
+    <string name="choose_method">اختر طريقة الدفع</string>
+    <string name="payment_pending">هذا الخيار جاهز للعرض، لكن الدفع الفعلي غير مفعل بعد. يجب أولاً ربط بوابة دفع آمنة.</string>
+    <string-array name="language_names"><item>Kiswahili</item><item>English</item><item>Français</item><item>Español</item><item>Português</item><item>العربية</item><item>हिन्दी</item><item>中文</item></string-array>
+    <string-array name="package_options"><item>يوم واحد</item><item>7 أيام</item><item>30 يوماً</item></string-array>
+    <string-array name="payment_methods"><item>M-Pesa</item><item>Airtel Money</item><item>Mixx by Yas (Tigo Pesa)</item><item>HaloPesa</item><item>Visa / Mastercard</item></string-array>
+</resources>
