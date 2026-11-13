@@ -14,6 +14,7 @@ import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -77,6 +78,7 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.languageButton).setOnClickListener { showLanguagePicker() }
         findViewById<Button>(R.id.paymentButton).setOnClickListener { showSubscriptionPicker() }
         findViewById<Button>(R.id.adminDashboardButton).setOnClickListener { showAdminDashboard() }
+        findViewById<Button>(R.id.aiAssistantButton).setOnClickListener { showAiAssistant() }
         findViewById<Button>(R.id.vpnSettingsButton).setOnClickListener {
             try {
                 startActivity(Intent(Settings.ACTION_VPN_SETTINGS))
@@ -97,6 +99,58 @@ class MainActivity : Activity() {
         }
     }
 
+
+    private fun showAiAssistant() {
+        val question = EditText(this).apply {
+            hint = "Andika swali lako kuhusu KEM VPN..."
+            minLines = 2
+            maxLines = 4
+            setPadding(28, 20, 28, 20)
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(24, 8, 24, 0)
+            addView(TextView(this@MainActivity).apply {
+                text = "Karibu! Naweza kusaidia kuhusu kuunganisha VPN, profaili ya WireGuard, vifurushi na malipo."
+                textSize = 15f
+            })
+            addView(question)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("KEM AI • Msaidizi")
+            .setView(content)
+            .setPositiveButton("ULIZA") { _, _ ->
+                val q = question.text.toString().trim()
+                if (q.isNotEmpty()) {
+                    AlertDialog.Builder(this)
+                        .setTitle("KEM AI • Jibu")
+                        .setMessage(localAssistantReply(q))
+                        .setPositiveButton("ULIZA TENA") { _, _ -> showAiAssistant() }
+                        .setNegativeButton("Funga", null)
+                        .show()
+                }
+            }
+            .setNegativeButton("Funga", null)
+            .show()
+    }
+
+    private fun localAssistantReply(question: String): String {
+        val q = question.lowercase(Locale.ROOT)
+        return when {
+            listOf("ungan", "connect", "vpn").any { q.contains(it) } ->
+                "Ili kuunganisha: 1) Pata profaili halali ya WireGuard (.conf) kutoka kwa msimamizi wa seva. 2) Ingiza faili kwenye KEM VPN. 3) Bonyeza UNGANISHA na ukubali ruhusa ya Android. Bila seva inayofanya kazi na profaili sahihi, VPN haiwezi kutoa muunganisho."
+            listOf("profile", "profaili", "conf", "wireguard").any { q.contains(it) } ->
+                "Profaili ya WireGuard ni faili la .conf lenye sehemu [Interface] na [Peer]. Usimpe mtu mwingine faili lako kwa sababu linaweza kuwa na PrivateKey."
+            listOf("malipo", "lipa", "payment", "airtel").any { q.contains(it) } ->
+                "KEM VPN inaonyesha njia za malipo, lakini uthibitishaji wa malipo na kuwasha kifurushi kiotomatiki bado haujaunganishwa. Usilipe mpaka mfumo rasmi wa malipo uthibitishwe."
+            listOf("kifurushi", "package", "bei").any { q.contains(it) } ->
+                "Fungua sehemu ya Vifurushi na malipo kuchagua kifurushi. Bei na uanzishaji wa kiotomatiki bado havijaunganishwa kwenye seva."
+            listOf("wifi", "sim", "data", "internet", "mtandao").any { q.contains(it) } ->
+                "KEM VPN inaweza kutumia data ya SIM au Wi-Fi kama njia ya intaneti. Hiyo peke yake si VPN; bado unahitaji seva ya WireGuard na profaili halali."
+            else ->
+                "Nimepokea swali lako. Huyu ni msaidizi wa majaribio wa ndani ya programu mwenye majibu ya maswali ya kawaida. AI ya mazungumzo ya moja kwa moja itahitaji kuunganishwa na backend salama; haijaunganishwa bado. Jaribu kuuliza kuhusu VPN, WireGuard, Wi-Fi, vifurushi au malipo."
+        }
+    }
 
     private fun showAdminDashboard() {
         val options = arrayOf(
