@@ -4,8 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.net.VpnService
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -24,8 +26,16 @@ class MainActivity : Activity() {
     private lateinit var statusText: TextView
     private lateinit var connectButton: Button
     private lateinit var connectionMethod: TextView
+    private lateinit var connectivityManager: ConnectivityManager
     private var connected = false
     private var pendingConfig: Config? = null
+
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) = runOnUiThread { updateConnectionMethod() }
+        override fun onLost(network: Network) = runOnUiThread { updateConnectionMethod() }
+        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) =
+            runOnUiThread { updateConnectionMethod() }
+    }
 
     private val tunnel = object : Tunnel {
         override fun getName(): String = "kem-vpn"
@@ -34,6 +44,7 @@ class MainActivity : Activity() {
                 connected = newState == Tunnel.State.UP
                 statusText.text = if (connected) getString(R.string.connected) else getString(R.string.disconnected)
                 connectButton.text = if (connected) getString(R.string.disconnect) else getString(R.string.connect)
+                connectButton.isEnabled = true
             }
         }
     }
@@ -42,18 +53,27 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         backend = GoBackend(applicationContext)
+        connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         configInput = findViewById(R.id.configInput)
         statusText = findViewById(R.id.connectionStatus)
         connectButton = findViewById(R.id.connectButton)
-        findViewById<Button>(R.id.importProfileButton).setOnClickListener { openProfileFile() }
         connectionMethod = findViewById(R.id.connectionMethod)
+
+        findViewById<Button>(R.id.importProfileButton).setOnClickListener { openProfileFile() }
+        findViewById<Button>(R.id.vpnSettingsButton).setOnClickListener {
+            try {
+                startActivity(Intent(Settings.ACTION_VPN_SETTINGS))
+            } catch (_: Exception) {
+                Toast.makeText(this, R.string.vpn_settings, Toast.LENGTH_SHORT).show()
+            }
+        }
+
         updateConnectionMethod()
-        val connectivity = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-        connectivity.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: android.net.Network) = runOnUiThread { updateConnectionMethod() }
-            override fun onLost(network: android.net.Network) = runOnUiThread { updateConnectionMethod() }
-            override fun onCapabilitiesChanged(network: android.net.Network, capabilities: NetworkCapabilities) = runOnUiThread { updateConnectionMethod() }
-        })
+        try {
+            connectivityManager.registerDefaultNetworkCallback(networkCallback)
+        } catch (e: Exception) {
+            Toast.makeText(this, e.message ?: getString(R.string.connection_failed), Toast.LENGTH_LONG).show()
+        }
 
         connectButton.setOnClickListener {
             if (connected) disconnectVpn() else prepareAndConnect()
@@ -61,8 +81,7 @@ class MainActivity : Activity() {
     }
 
     private fun updateConnectionMethod() {
-        val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-        val capabilities = cm.getNetworkCapabilities(cm.activeNetwork)
+        val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
         connectionMethod.text = when {
             capabilities == null -> getString(R.string.no_internet_transport)
             capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> getString(R.string.mobile_data_transport)
@@ -76,7 +95,6 @@ class MainActivity : Activity() {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
         }
-        @Suppress("DEPRECATION")
         startActivityForResult(intent, PROFILE_FILE_REQUEST)
     }
 
@@ -86,7 +104,6 @@ class MainActivity : Activity() {
             Toast.makeText(this, R.string.paste_config_first, Toast.LENGTH_LONG).show()
             return
         }
-
         if (!raw.contains("[Interface]", ignoreCase = true) || !raw.contains("[Peer]", ignoreCase = true)) {
             Toast.makeText(this, R.string.profile_format_required, Toast.LENGTH_LONG).show()
             return
@@ -95,33 +112,33 @@ class MainActivity : Activity() {
         val parsed = try {
             Config.parse(BufferedReader(StringReader(raw)))
         } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.invalid_config, e.message ?: "Unknown error"), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.invalid_config, e.message ?: "Hitilafu"), Toast.LENGTH_LONG).show()
             return
         }
         pendingConfig = parsed
-
         val permissionIntent = VpnService.prepare(this)
         if (permissionIntent != null) {
-            @Suppress("DEPRECATION")
             startActivityForResult(permissionIntent, VPN_PERMISSION_REQUEST)
         } else {
             connectWithConfig()
         }
     }
 
-    @Deprecated("Uses Android's compatible VPN permission result callback")
+    @Deprecated("Android-compatible VPN permission result callback")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PROFILE_FILE_REQUEST && resultCode == RESULT_OK) {
             val uri = data?.data ?: return
             try {
-                val profileText = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
-                    ?: throw IllegalStateException("Could not read selected file")
-                if (profileText.length > 65536) throw IllegalArgumentException("Profile file is too large")
+                val profileText = contentResolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
+                    val text = reader.readText()
+                    if (text.length > MAX_PROFILE_CHARS) throw IllegalArgumentException("Faili ni kubwa mno")
+                    text
+                } ?: throw IllegalStateException("Faili halijasomeka")
                 configInput.setText(profileText)
                 Toast.makeText(this, R.string.profile_imported, Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
-                Toast.makeText(this, getString(R.string.profile_import_failed, e.message ?: "Unknown error"), Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.profile_import_failed, e.message ?: "Hitilafu"), Toast.LENGTH_LONG).show()
             }
             return
         }
@@ -138,14 +155,9 @@ class MainActivity : Activity() {
         executor.execute {
             try {
                 backend.setState(tunnel, Tunnel.State.UP, config)
-                runOnUiThread {
-                    connectButton.isEnabled = true
-                    statusText.text = getString(R.string.connected)
-                    connected = true
-                    connectButton.text = getString(R.string.disconnect)
-                }
             } catch (e: Exception) {
                 runOnUiThread {
+                    connected = false
                     connectButton.isEnabled = true
                     statusText.text = getString(R.string.connection_failed)
                     Toast.makeText(this, e.message ?: getString(R.string.connection_failed), Toast.LENGTH_LONG).show()
@@ -159,12 +171,6 @@ class MainActivity : Activity() {
         executor.execute {
             try {
                 backend.setState(tunnel, Tunnel.State.DOWN, null)
-                runOnUiThread {
-                    connected = false
-                    connectButton.isEnabled = true
-                    connectButton.text = getString(R.string.connect)
-                    statusText.text = getString(R.string.disconnected)
-                }
             } catch (e: Exception) {
                 runOnUiThread {
                     connectButton.isEnabled = true
@@ -175,6 +181,10 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        try {
+            connectivityManager.unregisterNetworkCallback(networkCallback)
+        } catch (_: Exception) {
+        }
         executor.shutdown()
         super.onDestroy()
     }
@@ -182,5 +192,6 @@ class MainActivity : Activity() {
     companion object {
         private const val VPN_PERMISSION_REQUEST = 701
         private const val PROFILE_FILE_REQUEST = 702
+        private const val MAX_PROFILE_CHARS = 65536
     }
 }
