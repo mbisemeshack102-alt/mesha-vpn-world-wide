@@ -102,53 +102,80 @@ class MainActivity : Activity() {
 
     private fun showAiAssistant() {
         val question = EditText(this).apply {
-            hint = "Andika swali lako kuhusu KEM VPN..."
+            hint = "Andika swali lolote hapa..."
             minLines = 2
-            maxLines = 4
+            maxLines = 5
             setPadding(28, 20, 28, 20)
         }
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(24, 8, 24, 0)
             addView(TextView(this@MainActivity).apply {
-                text = "Karibu! Naweza kusaidia kuhusu kuunganisha VPN, profaili ya WireGuard, vifurushi na malipo."
+                text = "KEM AI ONLINE • Uliza kuhusu VPN au mada nyingine yoyote."
                 textSize = 15f
             })
             addView(question)
         }
         AlertDialog.Builder(this)
-            .setTitle("KEM AI • Msaidizi")
+            .setTitle("KEM AI • Msaidizi wa Mtandaoni")
             .setView(content)
-            .setPositiveButton("ULIZA") { _, _ ->
+            .setPositiveButton("TUMA SWALI") { _, _ ->
                 val q = question.text.toString().trim()
-                if (q.isNotEmpty()) {
-                    AlertDialog.Builder(this)
-                        .setTitle("KEM AI • Jibu")
-                        .setMessage(localAssistantReply(q))
-                        .setPositiveButton("ULIZA TENA") { _, _ -> showAiAssistant() }
-                        .setNegativeButton("Funga", null)
-                        .show()
-                }
+                if (q.isNotEmpty()) askOnlineAi(q)
             }
             .setNegativeButton("Funga", null)
             .show()
     }
 
-    private fun localAssistantReply(question: String): String {
-        val q = question.lowercase(Locale.ROOT)
-        return when {
-            listOf("ungan", "connect", "vpn").any { q.contains(it) } ->
-                "Ili kuunganisha: 1) Pata profaili halali ya WireGuard (.conf) kutoka kwa msimamizi wa seva. 2) Ingiza faili kwenye KEM VPN. 3) Bonyeza UNGANISHA na ukubali ruhusa ya Android. Bila seva inayofanya kazi na profaili sahihi, VPN haiwezi kutoa muunganisho."
-            listOf("profile", "profaili", "conf", "wireguard").any { q.contains(it) } ->
-                "Profaili ya WireGuard ni faili la .conf lenye sehemu [Interface] na [Peer]. Usimpe mtu mwingine faili lako kwa sababu linaweza kuwa na PrivateKey."
-            listOf("malipo", "lipa", "payment", "airtel").any { q.contains(it) } ->
-                "KEM VPN inaonyesha njia za malipo, lakini uthibitishaji wa malipo na kuwasha kifurushi kiotomatiki bado haujaunganishwa. Usilipe mpaka mfumo rasmi wa malipo uthibitishwe."
-            listOf("kifurushi", "package", "bei").any { q.contains(it) } ->
-                "Fungua sehemu ya Vifurushi na malipo kuchagua kifurushi. Bei na uanzishaji wa kiotomatiki bado havijaunganishwa kwenye seva."
-            listOf("wifi", "sim", "data", "internet", "mtandao").any { q.contains(it) } ->
-                "KEM VPN inaweza kutumia data ya SIM au Wi-Fi kama njia ya intaneti. Hiyo peke yake si VPN; bado unahitaji seva ya WireGuard na profaili halali."
-            else ->
-                "Nimepokea swali lako. Huyu ni msaidizi wa majaribio wa ndani ya programu mwenye majibu ya maswali ya kawaida. AI ya mazungumzo ya moja kwa moja itahitaji kuunganishwa na backend salama; haijaunganishwa bado. Jaribu kuuliza kuhusu VPN, WireGuard, Wi-Fi, vifurushi au malipo."
+    private fun askOnlineAi(question: String) {
+        val endpoint = BuildConfig.AI_API_URL.trim()
+        if (endpoint.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("KEM AI ONLINE")
+                .setMessage("Huduma ya AI bado haijaunganishwa na seva. Backend ya KEM AI inahitaji kuwekwa na OPENAI_API_KEY kuhifadhiwa upande wa seva; funguo haitahifadhiwa ndani ya APK.")
+                .setPositiveButton("Sawa", null)
+                .show()
+            return
+        }
+        Toast.makeText(this, "KEM AI inatafuta jibu…", Toast.LENGTH_SHORT).show()
+        executor.execute {
+            var connection: java.net.HttpURLConnection? = null
+            try {
+                connection = (java.net.URL(endpoint).openConnection() as java.net.HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = 15000
+                    readTimeout = 30000
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                }
+                val payload = org.json.JSONObject().put("question", question).toString()
+                connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val response = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                if (code !in 200..299) throw IllegalStateException("Huduma ya AI imerudisha hitilafu ($code).")
+                val answer = org.json.JSONObject(response).optString("answer").trim()
+                if (answer.isEmpty()) throw IllegalStateException("Jibu halijapatikana.")
+                runOnUiThread {
+                    AlertDialog.Builder(this)
+                        .setTitle("KEM AI • Jibu")
+                        .setMessage(answer)
+                        .setPositiveButton("ULIZA TENA") { _, _ -> showAiAssistant() }
+                        .setNegativeButton("Funga", null)
+                        .show()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    AlertDialog.Builder(this)
+                        .setTitle("KEM AI • Hitilafu")
+                        .setMessage(e.message ?: "Imeshindikana kuwasiliana na AI. Jaribu tena ukiwa na intaneti.")
+                        .setPositiveButton("Jaribu tena") { _, _ -> askOnlineAi(question) }
+                        .setNegativeButton("Funga", null)
+                        .show()
+                }
+            } finally {
+                connection?.disconnect()
+            }
         }
     }
 
