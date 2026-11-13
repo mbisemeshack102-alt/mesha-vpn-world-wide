@@ -161,6 +161,18 @@
         </LinearLayout>
 
         <Button
+            android:id="@+id/importProfileButton"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_panel"
+            android:backgroundTint="@null"
+            android:text="@string/import_profile"
+            android:textColor="#7DDCFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <Button
             android:id="@+id/connectButton"
             android:layout_width="match_parent"
             android:layout_height="62dp"
