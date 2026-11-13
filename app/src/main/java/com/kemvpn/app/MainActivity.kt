@@ -212,13 +212,15 @@ class MainActivity : Activity() {
 
     private fun showPackageManagement() {
         val prefs = getSharedPreferences("kem_admin_packages", Context.MODE_PRIVATE)
-        val defaults = arrayOf("KIFURUSHI CHA SIKU 1", "KIFURUSHI CHA SIKU 7", "KIFURUSHI CHA SIKU 30")
-        val saved = (0..2).map { prefs.getString("package_$it", defaults[it]) ?: defaults[it] }.toTypedArray()
-        val labels = arrayOf("Badilisha kifurushi cha siku 1", "Badilisha kifurushi cha siku 7", "Badilisha kifurushi cha siku 30", "Rudisha vifurushi vya mwanzo")
+        val defaults = resources.getStringArray(R.array.package_options)
+        val saved = defaults.indices.map { i -> prefs.getString("package_$i", defaults[i]) ?: defaults[i] }.toTypedArray()
+        val labels = defaults.indices.map { i -> "Badilisha: ${defaults[i]}" }.toMutableList().apply {
+            add("Rudisha vifurushi vya mwanzo")
+        }.toTypedArray()
         AlertDialog.Builder(this)
             .setTitle("Usimamizi wa vifurushi")
             .setItems(labels) { _, index ->
-                if (index == 3) {
+                if (index == defaults.size) {
                     prefs.edit().clear().apply()
                     Toast.makeText(this, "Vifurushi vya mwanzo vimerejeshwa", Toast.LENGTH_SHORT).show()
                     return@setItems
@@ -259,7 +261,7 @@ class MainActivity : Activity() {
         // Mteja huona vifurushi vyote, huchagua kimoja, kisha huchagua njia ya malipo.
         val defaults = resources.getStringArray(R.array.package_options)
         val packagePrefs = getSharedPreferences("kem_admin_packages", Context.MODE_PRIVATE)
-        val packages = Array(3) { i -> packagePrefs.getString("package_$i", defaults[i]) ?: defaults[i] }
+        val packages = Array(defaults.size) { i -> packagePrefs.getString("package_$i", defaults[i]) ?: defaults[i] }
         AlertDialog.Builder(this)
             .setTitle(R.string.choose_package)
             .setItems(packages) { _, packageIndex ->
