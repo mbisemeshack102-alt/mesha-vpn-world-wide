@@ -11,6 +11,11 @@
     <string name="paste_config_first">Paste your WireGuard profile first.</string>
     <string name="vpn_permission_denied">VPN permission was not granted.</string>
     <string name="invalid_config">Invalid WireGuard profile: %1$s</string>
+    <string name="mobile_data_transport">Internet transport: SIM / Mobile Data</string>
+    <string name="wifi_transport">Internet transport: Wi-Fi</string>
+    <string name="no_internet_transport">No internet connection detected</string>
+    <string name="other_transport">Internet transport: Other network</string>
+    <string name="profile_format_required">Paste a complete WireGuard profile with [Interface] and [Peer] sections. A number alone is not a profile.</string>
     <string name="config_hint">Paste your private WireGuard client profile here…</string>
     <string name="config_note">Get a client profile from your KEM VPN server administrator. Your profile contains a private key: keep it secret and never post it publicly or commit it to GitHub. This app does not create internet service by itself; a configured WireGuard server is required.</string>
 </resources>
