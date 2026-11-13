@@ -35,6 +35,12 @@
     <string name="choose_method">Choisir le moyen de paiement</string>
     <string name="payment_pending">Cette option est préparée, mais les paiements réels ne sont pas encore activés. La passerelle de paiement sécurisée doit d’abord être connectée.</string>
     <string-array name="language_names"><item>Kiswahili</item><item>English</item><item>Français</item><item>Español</item><item>Português</item><item>العربية</item><item>हिन्दी</item><item>中文</item></string-array>
-    <string-array name="package_options"><item>1 jour</item><item>7 jours</item><item>30 jours</item></string-array>
+    <string-array name="package_options">
+        <item>500 TSh • 8 heures</item>
+        <item>1 000 TSh • 1 jour</item>
+        <item>2 000 TSh • 1 semaine</item>
+        <item>4 000 TSh • 2 semaines</item>
+        <item>15 000 TSh • 1 mois</item>
+    </string-array>
     <string-array name="payment_methods"><item>M-Pesa</item><item>Airtel Money</item><item>Mixx by Yas (Tigo Pesa)</item><item>HaloPesa</item><item>Visa / Mastercard</item></string-array>
 </resources>
