@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "KEM VPN",
+  "short_name": "KEM VPN",
+  "description": "KEM VPN mobile web app",
+  "lang": "sw",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#061321",
+  "theme_color": "#071a2b",
+  "icons": [
+    { "src": "./kem-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
