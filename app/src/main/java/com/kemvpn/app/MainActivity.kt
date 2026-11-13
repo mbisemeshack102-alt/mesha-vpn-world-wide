@@ -112,36 +112,49 @@ class MainActivity : Activity() {
     }
 
     private fun showSubscriptionPicker() {
+        // Mteja huona vifurushi vyote, huchagua kimoja, kisha huchagua njia ya malipo.
         val packages = resources.getStringArray(R.array.package_options)
         AlertDialog.Builder(this)
             .setTitle(R.string.choose_package)
             .setItems(packages) { _, packageIndex ->
-                val methods = resources.getStringArray(R.array.payment_methods)
+                val chosenPackage = packages[packageIndex]
                 AlertDialog.Builder(this)
-                    .setTitle(R.string.choose_method)
-                    .setItems(methods) { _, methodIndex ->
-                        val selected = "${packages[packageIndex]} • ${methods[methodIndex]}"
-                        if (methodIndex == 1) {
-                            AlertDialog.Builder(this)
-                                .setTitle(selected)
-                                .setMessage(R.string.airtel_payment_instructions)
-                                .setPositiveButton(R.string.copy_number) { _, _ ->
-                                    val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                                    clipboard.setPrimaryClip(ClipData.newPlainText("Airtel Lipa Namba", getString(R.string.airtel_lipa_number)))
-                                    Toast.makeText(this, R.string.number_copied, Toast.LENGTH_SHORT).show()
-                                }
-                                .setNegativeButton(android.R.string.ok, null)
-                                .show()
-                        } else {
-                            AlertDialog.Builder(this)
-                                .setTitle(selected)
-                                .setMessage(R.string.payment_pending)
-                                .setPositiveButton(android.R.string.ok, null)
-                                .show()
-                        }
+                    .setTitle(chosenPackage)
+                    .setMessage(R.string.package_selected_prompt)
+                    .setPositiveButton(R.string.continue_to_payment) { _, _ ->
+                        showPaymentMethods(chosenPackage)
                     }
                     .setNegativeButton(android.R.string.cancel, null)
                     .show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showPaymentMethods(chosenPackage: String) {
+        val methods = resources.getStringArray(R.array.payment_methods)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.choose_method)
+            .setItems(methods) { _, methodIndex ->
+                val selected = "$chosenPackage • ${methods[methodIndex]}"
+                if (methodIndex == 1) {
+                    AlertDialog.Builder(this)
+                        .setTitle(selected)
+                        .setMessage(R.string.airtel_payment_instructions)
+                        .setPositiveButton(R.string.copy_number) { _, _ ->
+                            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                            clipboard.setPrimaryClip(ClipData.newPlainText("Airtel Lipa Namba", getString(R.string.airtel_lipa_number)))
+                            Toast.makeText(this, R.string.number_copied, Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton(android.R.string.ok, null)
+                        .show()
+                } else {
+                    AlertDialog.Builder(this)
+                        .setTitle(selected)
+                        .setMessage(R.string.payment_pending)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show()
+                }
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
