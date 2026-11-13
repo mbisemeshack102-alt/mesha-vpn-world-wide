@@ -31,7 +31,9 @@
     <string name="language_button">Lugha</string>
     <string name="choose_language">Chagua lugha ya programu</string>
     <string name="payment_button">Vifurushi na malipo</string>
-    <string name="choose_package">Chagua kifurushi cha usajili</string>
+    <string name="choose_package">Chagua kifurushi unachotaka</string>
+    <string name="package_selected_prompt">Umechagua kifurushi hiki. Endelea kuchagua njia ya malipo ili kulipia.</string>
+    <string name="continue_to_payment">ENDELEA KWENDA MALIPO</string>
     <string name="choose_method">Chagua njia ya malipo</string>
     <string name="payment_pending">Chaguo hili limeandaliwa, lakini malipo halisi bado hayajawashwa. Kwanza tunahitaji kuunganisha mfumo salama wa malipo.</string>
     <string name="airtel_lipa_number">326391897</string>
@@ -43,7 +45,7 @@
         <item>Kiswahili</item><item>English</item><item>Français</item><item>Español</item><item>Português</item><item>العربية</item><item>हिन्दी</item><item>中文</item>
     </string-array>
     <string-array name="package_options">
-        <item>Siku 1</item><item>Siku 7</item><item>Siku 30</item>
+        <item>KIFURUSHI CHA SIKU 1</item><item>KIFURUSHI CHA SIKU 7</item><item>KIFURUSHI CHA SIKU 30</item>
     </string-array>
     <string-array name="payment_methods">
         <item>M-Pesa</item><item>Airtel Money</item><item>Mixx by Yas (Tigo Pesa)</item><item>HaloPesa</item><item>Visa / Mastercard</item>
