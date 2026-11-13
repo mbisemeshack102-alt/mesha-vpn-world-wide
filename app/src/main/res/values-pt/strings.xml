@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KEM VPN</string>
+    <string name="tagline">Ligação segura, onde quer que esteja</string>
+    <string name="connect">CONECTAR</string>
+    <string name="disconnect">DESCONECTAR</string>
+    <string name="connecting">A ligar VPN…</string>
+    <string name="connected">Ligado</string>
+    <string name="disconnected">Desligado</string>
+    <string name="connection_failed">Falha na ligação</string>
+    <string name="paste_config_first">Cole primeiro o seu perfil WireGuard.</string>
+    <string name="vpn_permission_denied">A permissão VPN não foi concedida.</string>
+    <string name="invalid_config">Perfil WireGuard inválido: %1$s</string>
+    <string name="mobile_data_transport">Rede em uso: dados móveis</string>
+    <string name="wifi_transport">Rede em uso: Wi-Fi</string>
+    <string name="no_internet_transport">Sem ligação à Internet</string>
+    <string name="other_transport">Rede em uso: outra rede</string>
+    <string name="profile_format_required">Introduza um perfil WireGuard completo com as secções [Interface] e [Peer].</string>
+    <string name="import_profile">IMPORTAR FICHEIRO VPN (.conf)</string>
+    <string name="profile_imported">Perfil importado. Reveja-o antes de ligar.</string>
+    <string name="profile_import_failed">Não foi possível importar o perfil: %1$s</string>
+    <string name="config_hint">Cole aqui o seu perfil WireGuard privado…</string>
+    <string name="config_note">Obtenha um perfil de cliente do administrador do servidor KEM VPN. Contém uma chave privada: nunca a partilhe publicamente nem a envie para o GitHub. Esta aplicação não cria acesso à Internet por si só; precisa de um servidor WireGuard válido.</string>
+    <string name="privacy_title">A sua privacidade importa</string>
+    <string name="privacy_subtitle">Navegue com segurança • Proteja as suas comunicações</string>
+    <string name="connect_prompt">Toque em Conectar para iniciar a VPN</string>
+    <string name="profile_title">Perfil WireGuard</string>
+    <string name="footer_text">KEM VPN • RÁPIDO • ESTÁVEL • SEGURO</string>
+    <string name="vpn_settings">Definições VPN do Android</string>
+    <string name="always_on_note">Para Kill Switch, abra as definições do Android, selecione KEM VPN e ative VPN sempre ligada e Bloquear ligações sem VPN, se disponível.</string>
+    <string name="language_button">Idioma</string>
+    <string name="choose_language">Escolher idioma</string>
+    <string name="payment_button">Planos e pagamento</string>
+    <string name="choose_package">Escolher um pacote</string>
+    <string name="choose_method">Escolher método de pagamento</string>
+    <string name="payment_pending">Esta opção está preparada, mas os pagamentos reais ainda não estão ativos. Primeiro é necessário ligar um gateway de pagamento seguro.</string>
+    <string-array name="language_names"><item>Kiswahili</item><item>English</item><item>Français</item><item>Español</item><item>Português</item><item>العربية</item><item>हिन्दी</item><item>中文</item></string-array>
+    <string-array name="package_options"><item>1 dia</item><item>7 dias</item><item>30 dias</item></string-array>
+    <string-array name="payment_methods"><item>M-Pesa</item><item>Airtel Money</item><item>Mixx by Yas (Tigo Pesa)</item><item>HaloPesa</item><item>Visa / Mastercard</item></string-array>
+</resources>
