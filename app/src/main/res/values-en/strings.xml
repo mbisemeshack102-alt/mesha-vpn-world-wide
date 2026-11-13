@@ -35,6 +35,12 @@
     <string name="choose_method">Choose payment method</string>
     <string name="payment_pending">This payment option is prepared, but live payments are not enabled yet. The secure payment gateway must be connected first.</string>
     <string-array name="language_names"><item>Kiswahili</item><item>English</item><item>Français</item><item>Español</item><item>Português</item><item>العربية</item><item>हिन्दी</item><item>中文</item></string-array>
-    <string-array name="package_options"><item>1 day</item><item>7 days</item><item>30 days</item></string-array>
+    <string-array name="package_options">
+        <item>TSh 500 • 8 hours</item>
+        <item>TSh 1,000 • 1 day</item>
+        <item>TSh 2,000 • 1 week</item>
+        <item>TSh 4,000 • 2 weeks</item>
+        <item>TSh 15,000 • 1 month</item>
+    </string-array>
     <string-array name="payment_methods"><item>M-Pesa</item><item>Airtel Money</item><item>Mixx by Yas (Tigo Pesa)</item><item>HaloPesa</item><item>Visa / Mastercard</item></string-array>
 </resources>
