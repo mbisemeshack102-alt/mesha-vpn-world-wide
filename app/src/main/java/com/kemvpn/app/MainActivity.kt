@@ -128,11 +128,13 @@ class MainActivity : Activity() {
     }
 
     private fun askOnlineAi(question: String) {
-        val endpoint = BuildConfig.AI_API_URL.trim()
+        val supabaseUrl = BuildConfig.SUPABASE_URL.trim().trimEnd('/')
+        val anonKey = BuildConfig.SUPABASE_ANON_KEY.trim()
+        val endpoint = if (supabaseUrl.isNotEmpty()) "$supabaseUrl/functions/v1/kem-ai" else ""
         if (endpoint.isEmpty()) {
             AlertDialog.Builder(this)
                 .setTitle("KEM AI ONLINE")
-                .setMessage("Huduma ya AI bado haijaunganishwa na seva. Backend ya KEM AI inahitaji kuwekwa na OPENAI_API_KEY kuhifadhiwa upande wa seva; funguo haitahifadhiwa ndani ya APK.")
+                .setMessage("KEM AI bado haijaunganishwa na mradi wa Supabase. Tunahitaji kuweka URL na anon key za KEM VPN kwenye mipangilio ya build, kisha OPENAI_API_KEY ihifadhiwe kwenye Supabase Secrets. Ufunguo wa OpenAI hautawekwa ndani ya APK.")
                 .setPositiveButton("Sawa", null)
                 .show()
             return
@@ -147,6 +149,8 @@ class MainActivity : Activity() {
                     readTimeout = 30000
                     doOutput = true
                     setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                    setRequestProperty("apikey", anonKey)
+                    setRequestProperty("Authorization", "Bearer $anonKey")
                 }
                 val payload = org.json.JSONObject().put("question", question).toString()
                 connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
