@@ -1,6 +1,9 @@
 package com.kemvpn.app
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
+import android.content.res.Configuration
 import android.content.Intent
 import android.net.VpnService
 import android.net.ConnectivityManager
@@ -17,9 +20,18 @@ import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.Config
 import java.io.BufferedReader
 import java.io.StringReader
+import java.util.Locale
 import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
+    override fun attachBaseContext(newBase: Context) {
+        val language = newBase.getSharedPreferences("kem_settings", Context.MODE_PRIVATE)
+            .getString("app_language", "sw") ?: "sw"
+        val configuration = Configuration(newBase.resources.configuration)
+        configuration.setLocale(Locale.forLanguageTag(language))
+        super.attachBaseContext(newBase.createConfigurationContext(configuration))
+    }
+
     private val executor = Executors.newSingleThreadExecutor()
     private lateinit var backend: GoBackend
     private lateinit var configInput: EditText
@@ -60,6 +72,8 @@ class MainActivity : Activity() {
         connectionMethod = findViewById(R.id.connectionMethod)
 
         findViewById<Button>(R.id.importProfileButton).setOnClickListener { openProfileFile() }
+        findViewById<Button>(R.id.languageButton).setOnClickListener { showLanguagePicker() }
+        findViewById<Button>(R.id.paymentButton).setOnClickListener { showSubscriptionPicker() }
         findViewById<Button>(R.id.vpnSettingsButton).setOnClickListener {
             try {
                 startActivity(Intent(Settings.ACTION_VPN_SETTINGS))
@@ -78,6 +92,44 @@ class MainActivity : Activity() {
         connectButton.setOnClickListener {
             if (connected) disconnectVpn() else prepareAndConnect()
         }
+    }
+
+
+    private fun showLanguagePicker() {
+        val languages = resources.getStringArray(R.array.language_names)
+        val codes = arrayOf("sw", "en", "fr", "es", "pt", "ar", "hi", "zh")
+        AlertDialog.Builder(this)
+            .setTitle(R.string.choose_language)
+            .setItems(languages) { _, which ->
+                getSharedPreferences("kem_settings", Context.MODE_PRIVATE)
+                    .edit().putString("app_language", codes[which]).apply()
+                recreate()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showSubscriptionPicker() {
+        val packages = resources.getStringArray(R.array.package_options)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.choose_package)
+            .setItems(packages) { _, packageIndex ->
+                val methods = resources.getStringArray(R.array.payment_methods)
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.choose_method)
+                    .setItems(methods) { _, methodIndex ->
+                        val selected = "${packages[packageIndex]} • ${methods[methodIndex]}"
+                        AlertDialog.Builder(this)
+                            .setTitle(selected)
+                            .setMessage(R.string.payment_pending)
+                            .setPositiveButton(android.R.string.ok, null)
+                            .show()
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun updateConnectionMethod() {
