@@ -34,6 +34,10 @@
     <string name="choose_package">Chagua kifurushi cha usajili</string>
     <string name="choose_method">Chagua njia ya malipo</string>
     <string name="payment_pending">Chaguo hili limeandaliwa, lakini malipo halisi bado hayajawashwa. Kwanza tunahitaji kuunganisha mfumo salama wa malipo.</string>
+    <string name="airtel_lipa_number">326391897</string>
+    <string name="copy_number">Nakili Lipa Namba</string>
+    <string name="number_copied">Lipa Namba imenakiliwa</string>
+    <string name="airtel_payment_instructions">Lipa kwa Airtel Money kupitia Lipa Namba hii: 326391897. Nakili namba kisha fuata menyu ya Airtel Money. Huu ni mwongozo wa malipo tu; kifurushi kitawezeshwa baada ya mfumo kuthibitisha malipo.</string>
     <string-array name="language_names">
         <item>Kiswahili</item><item>English</item><item>Français</item><item>Español</item><item>Português</item><item>العربية</item><item>हिन्दी</item><item>中文</item>
     </string-array>
