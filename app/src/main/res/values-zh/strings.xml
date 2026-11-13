@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KEM VPN</string>
+    <string name="tagline">无论身在何处，安全连接</string>
+    <string name="connect">连接</string>
+    <string name="disconnect">断开</string>
+    <string name="connecting">正在连接 VPN…</string>
+    <string name="connected">已连接</string>
+    <string name="disconnected">未连接</string>
+    <string name="connection_failed">连接失败</string>
+    <string name="paste_config_first">请先粘贴 WireGuard 配置。</string>
+    <string name="vpn_permission_denied">未获得 VPN 权限。</string>
+    <string name="invalid_config">WireGuard 配置无效：%1$s</string>
+    <string name="mobile_data_transport">当前网络：移动数据</string>
+    <string name="wifi_transport">当前网络：Wi-Fi</string>
+    <string name="no_internet_transport">没有互联网连接</string>
+    <string name="other_transport">当前网络：其他网络</string>
+    <string name="profile_format_required">请输入包含 [Interface] 和 [Peer] 部分的完整 WireGuard 配置。</string>
+    <string name="import_profile">导入 VPN 文件 (.conf)</string>
+    <string name="profile_imported">配置已导入。连接前请检查。</string>
+    <string name="profile_import_failed">无法导入配置：%1$s</string>
+    <string name="config_hint">在此粘贴您的私人 WireGuard 配置…</string>
+    <string name="config_note">请向 KEM VPN 服务器管理员获取客户端配置。配置包含私钥：切勿公开分享或上传到 GitHub。此应用本身不会创建互联网连接；它需要有效的 WireGuard 服务器。</string>
+    <string name="privacy_title">您的隐私很重要</string>
+    <string name="privacy_subtitle">安全浏览 • 保护您的通信</string>
+    <string name="connect_prompt">点击连接以启动 VPN</string>
+    <string name="profile_title">WireGuard 配置</string>
+    <string name="footer_text">KEM VPN • 快速 • 稳定 • 安全</string>
+    <string name="vpn_settings">Android VPN 设置</string>
+    <string name="always_on_note">如需 Kill Switch，请打开 Android 设置，选择 KEM VPN，启用始终开启的 VPN，并在可用时启用无 VPN 时阻止连接。</string>
+    <string name="language_button">语言</string>
+    <string name="choose_language">选择应用语言</string>
+    <string name="payment_button">套餐与付款</string>
+    <string name="choose_package">选择订阅套餐</string>
+    <string name="choose_method">选择付款方式</string>
+    <string name="payment_pending">此选项已准备显示，但尚未启用真实付款。需要先连接安全支付网关。</string>
+    <string-array name="language_names"><item>Kiswahili</item><item>English</item><item>Français</item><item>Español</item><item>Português</item><item>العربية</item><item>हिन्दी</item><item>中文</item></string-array>
+    <string-array name="package_options"><item>1 天</item><item>7 天</item><item>30 天</item></string-array>
+    <string-array name="payment_methods"><item>M-Pesa</item><item>Airtel Money</item><item>Mixx by Yas (Tigo Pesa)</item><item>HaloPesa</item><item>Visa / Mastercard</item></string-array>
+</resources>
