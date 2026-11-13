@@ -172,7 +172,9 @@ class MainActivity : Activity() {
 
     private fun showSubscriptionPicker() {
         // Mteja huona vifurushi vyote, huchagua kimoja, kisha huchagua njia ya malipo.
-        val packages = resources.getStringArray(R.array.package_options)
+        val defaults = resources.getStringArray(R.array.package_options)
+        val packagePrefs = getSharedPreferences("kem_admin_packages", Context.MODE_PRIVATE)
+        val packages = Array(3) { i -> packagePrefs.getString("package_$i", defaults[i]) ?: defaults[i] }
         AlertDialog.Builder(this)
             .setTitle(R.string.choose_package)
             .setItems(packages) { _, packageIndex ->
