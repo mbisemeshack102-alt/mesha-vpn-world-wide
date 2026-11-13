@@ -1,22 +1,29 @@
 # KEM VPN
 
-Starter web app for the KEM VPN membership portal.
+KEM VPN is a mobile-first web app built with JavaScript, Vite and Supabase authentication.
 
-## Included
-- Responsive mobile-first login and registration UI (Swahili)
-- Supabase email/password authentication
-- Starter profiles table with Bronze, Silver, Gold and Platinum tiers
-- Row Level Security policy for each user's own profile
+## Free hosting (no VPS)
+The project is configured for GitHub Pages. Pushes to the `main` branch trigger a free static deployment through GitHub Actions.
 
-## Setup
+1. Open **Settings → Pages** in this repository.
+2. Under **Build and deployment**, choose **GitHub Actions** as the source.
+3. Wait for the **Deploy KEM VPN to GitHub Pages** workflow to finish.
+4. Open the Pages URL and use your Android browser menu → **Add to Home screen / Install app**.
+
+## Local development
 1. Copy `.env.example` to `.env`.
-2. Set `VITE_SUPABASE_URL` to your Supabase Project URL.
-3. Set `VITE_SUPABASE_PUBLISHABLE_KEY` to the project's publishable key.
-4. In Supabase SQL Editor, run `supabase/migrations/001_initial_schema.sql`.
-5. In Supabase Authentication settings, configure the site URL and email confirmation settings.
-6. Run `npm install`, then `npm run dev`. Use `npm run build` to create the production web build.
+2. Add the Supabase Project URL and Publishable Key.
+3. Run `npm install`, then `npm run dev`.
+4. Run `npm run build` to verify the production build.
+
+## Current capabilities and limits
+- Responsive Swahili login and registration UI.
+- Supabase email/password authentication when valid Supabase settings are supplied.
+- Password reset flow through Supabase email.
+- Installable PWA shell and basic offline caching of the app shell.
+- Mobile data and Wi-Fi are internet connection methods; the app can use either when available.
+- Offline caching does **not** provide internet access or a VPN tunnel.
+- A real VPN connection needs a VPN server/backend and a native Android VPNService or supported WireGuard integration. No VPN server is configured yet, so the app must not display a false connected state.
+- GitHub Pages hosts the web app for free for public repositories; it is not a VPN server.
 
 Never put a Supabase secret/service-role key in frontend code or commit it to GitHub.
-
-## Current status
-This is an initial frontend/authentication scaffold. Payment processing, VPN tunnel/server provisioning, admin controls, subscriptions, chat, and production APK packaging are not implemented yet. They require further backend and infrastructure setup.
