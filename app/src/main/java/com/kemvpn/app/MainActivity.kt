@@ -45,6 +45,7 @@ class MainActivity : Activity() {
         configInput = findViewById(R.id.configInput)
         statusText = findViewById(R.id.connectionStatus)
         connectButton = findViewById(R.id.connectButton)
+        findViewById<Button>(R.id.importProfileButton).setOnClickListener { openProfileFile() }
         connectionMethod = findViewById(R.id.connectionMethod)
         updateConnectionMethod()
         val connectivity = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -68,6 +69,15 @@ class MainActivity : Activity() {
             capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> getString(R.string.wifi_transport)
             else -> getString(R.string.other_transport)
         }
+    }
+
+    private fun openProfileFile() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }
+        @Suppress("DEPRECATION")
+        startActivityForResult(intent, PROFILE_FILE_REQUEST)
     }
 
     private fun prepareAndConnect() {
@@ -102,6 +112,19 @@ class MainActivity : Activity() {
     @Deprecated("Uses Android's compatible VPN permission result callback")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PROFILE_FILE_REQUEST && resultCode == RESULT_OK) {
+            val uri = data?.data ?: return
+            try {
+                val profileText = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    ?: throw IllegalStateException("Could not read selected file")
+                if (profileText.length > 65536) throw IllegalArgumentException("Profile file is too large")
+                configInput.setText(profileText)
+                Toast.makeText(this, R.string.profile_imported, Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, getString(R.string.profile_import_failed, e.message ?: "Unknown error"), Toast.LENGTH_LONG).show()
+            }
+            return
+        }
         if (requestCode == VPN_PERMISSION_REQUEST) {
             if (resultCode == RESULT_OK) connectWithConfig()
             else Toast.makeText(this, R.string.vpn_permission_denied, Toast.LENGTH_LONG).show()
@@ -158,5 +181,6 @@ class MainActivity : Activity() {
 
     companion object {
         private const val VPN_PERMISSION_REQUEST = 701
+        private const val PROFILE_FILE_REQUEST = 702
     }
 }
