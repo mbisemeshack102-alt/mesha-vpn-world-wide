@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        buildConfigField("String", "AI_API_URL", "\"\\\"\\\"")
+        buildConfigField("String", "AI_API_URL", "\"\"")
         applicationId = "com.kemvpn.app"
         minSdk = 26
         targetSdk = 35
