@@ -3,6 +3,9 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val kemSupabaseUrl = providers.gradleProperty("KEM_SUPABASE_URL").orElse("").get()
+val kemSupabaseAnonKey = providers.gradleProperty("KEM_SUPABASE_ANON_KEY").orElse("").get()
+
 android {
     namespace = "com.kemvpn.app"
     compileSdk = 35
@@ -12,7 +15,8 @@ android {
     }
 
     defaultConfig {
-        buildConfigField("String", "AI_API_URL", "\"\"")
+        buildConfigField("String", "SUPABASE_URL", "\"\${kemSupabaseUrl}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"\${kemSupabaseAnonKey}\"")
         applicationId = "com.kemvpn.app"
         minSdk = 26
         targetSdk = 35
