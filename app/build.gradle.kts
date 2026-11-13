@@ -7,7 +7,12 @@ android {
     namespace = "com.kemvpn.app"
     compileSdk = 35
 
-    buildFeatures {\n        buildConfig = true\n    }\n\n    defaultConfig {\n        buildConfigField("String", "AI_API_URL", "\\\"\\\"")
+    buildFeatures {
+        buildConfig = true
+    }
+
+    defaultConfig {
+        buildConfigField("String", "AI_API_URL", "\"\\\"\\\"")
         applicationId = "com.kemvpn.app"
         minSdk = 26
         targetSdk = 35
