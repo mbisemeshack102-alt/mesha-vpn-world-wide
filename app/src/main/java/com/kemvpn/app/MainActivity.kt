@@ -3,6 +3,8 @@ package com.kemvpn.app
 import android.app.Activity
 import android.content.Intent
 import android.net.VpnService
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -21,6 +23,7 @@ class MainActivity : Activity() {
     private lateinit var configInput: EditText
     private lateinit var statusText: TextView
     private lateinit var connectButton: Button
+    private lateinit var connectionMethod: TextView
     private var connected = false
     private var pendingConfig: Config? = null
 
@@ -42,9 +45,28 @@ class MainActivity : Activity() {
         configInput = findViewById(R.id.configInput)
         statusText = findViewById(R.id.connectionStatus)
         connectButton = findViewById(R.id.connectButton)
+        connectionMethod = findViewById(R.id.connectionMethod)
+        updateConnectionMethod()
+        val connectivity = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        connectivity.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) = runOnUiThread { updateConnectionMethod() }
+            override fun onLost(network: android.net.Network) = runOnUiThread { updateConnectionMethod() }
+            override fun onCapabilitiesChanged(network: android.net.Network, capabilities: NetworkCapabilities) = runOnUiThread { updateConnectionMethod() }
+        })
 
         connectButton.setOnClickListener {
             if (connected) disconnectVpn() else prepareAndConnect()
+        }
+    }
+
+    private fun updateConnectionMethod() {
+        val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val capabilities = cm.getNetworkCapabilities(cm.activeNetwork)
+        connectionMethod.text = when {
+            capabilities == null -> getString(R.string.no_internet_transport)
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> getString(R.string.mobile_data_transport)
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> getString(R.string.wifi_transport)
+            else -> getString(R.string.other_transport)
         }
     }
 
@@ -52,6 +74,11 @@ class MainActivity : Activity() {
         val raw = configInput.text.toString().trim()
         if (raw.isBlank()) {
             Toast.makeText(this, R.string.paste_config_first, Toast.LENGTH_LONG).show()
+            return
+        }
+
+        if (!raw.contains("[Interface]", ignoreCase = true) || !raw.contains("[Peer]", ignoreCase = true)) {
+            Toast.makeText(this, R.string.profile_format_required, Toast.LENGTH_LONG).show()
             return
         }
 
