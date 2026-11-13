@@ -218,6 +218,18 @@
             android:textStyle="bold" />
 
         <Button
+            android:id="@+id/adminDashboardButton"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_panel"
+            android:backgroundTint="@null"
+            android:text="ADMIN DASHBOARD"
+            android:textColor="#FFD166"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <Button
             android:id="@+id/vpnSettingsButton"
             android:layout_width="match_parent"
             android:layout_height="54dp"
