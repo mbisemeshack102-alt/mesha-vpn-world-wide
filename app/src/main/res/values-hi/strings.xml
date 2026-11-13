@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KEM VPN</string>
+    <string name="tagline">आप जहाँ भी हों, सुरक्षित कनेक्शन</string>
+    <string name="connect">कनेक्ट करें</string>
+    <string name="disconnect">डिस्कनेक्ट करें</string>
+    <string name="connecting">VPN कनेक्ट हो रहा है…</string>
+    <string name="connected">कनेक्टेड</string>
+    <string name="disconnected">कनेक्ट नहीं है</string>
+    <string name="connection_failed">कनेक्शन विफल</string>
+    <string name="paste_config_first">पहले अपना WireGuard प्रोफ़ाइल पेस्ट करें।</string>
+    <string name="vpn_permission_denied">VPN अनुमति नहीं मिली।</string>
+    <string name="invalid_config">अमान्य WireGuard प्रोफ़ाइल: %1$s</string>
+    <string name="mobile_data_transport">उपयोग में नेटवर्क: मोबाइल डेटा</string>
+    <string name="wifi_transport">उपयोग में नेटवर्क: Wi-Fi</string>
+    <string name="no_internet_transport">इंटरनेट कनेक्शन नहीं है</string>
+    <string name="other_transport">उपयोग में नेटवर्क: अन्य नेटवर्क</string>
+    <string name="profile_format_required">[Interface] और [Peer] अनुभागों वाला पूरा WireGuard प्रोफ़ाइल दर्ज करें।</string>
+    <string name="import_profile">VPN फ़ाइल आयात करें (.conf)</string>
+    <string name="profile_imported">प्रोफ़ाइल आयात हुई। कनेक्ट करने से पहले जाँचें।</string>
+    <string name="profile_import_failed">प्रोफ़ाइल आयात नहीं हुई: %1$s</string>
+    <string name="config_hint">अपना निजी WireGuard प्रोफ़ाइल यहाँ पेस्ट करें…</string>
+    <string name="config_note">KEM VPN सर्वर व्यवस्थापक से क्लाइंट प्रोफ़ाइल प्राप्त करें। इसमें निजी कुंजी होती है: इसे सार्वजनिक रूप से साझा न करें और GitHub पर अपलोड न करें। यह ऐप स्वयं इंटरनेट नहीं बनाता; इसे वैध WireGuard सर्वर चाहिए।</string>
+    <string name="privacy_title">आपकी गोपनीयता महत्वपूर्ण है</string>
+    <string name="privacy_subtitle">सुरक्षित ब्राउज़ करें • संचार सुरक्षित रखें</string>
+    <string name="connect_prompt">VPN शुरू करने के लिए कनेक्ट दबाएँ</string>
+    <string name="profile_title">WireGuard प्रोफ़ाइल</string>
+    <string name="footer_text">KEM VPN • तेज़ • स्थिर • सुरक्षित</string>
+    <string name="vpn_settings">Android VPN सेटिंग्स</string>
+    <string name="always_on_note">Kill Switch के लिए Android सेटिंग्स खोलें, KEM VPN चुनें, Always-on VPN और उपलब्ध होने पर Block connections without VPN चालू करें।</string>
+    <string name="language_button">भाषा</string>
+    <string name="choose_language">ऐप की भाषा चुनें</string>
+    <string name="payment_button">पैकेज और भुगतान</string>
+    <string name="choose_package">सब्सक्रिप्शन पैकेज चुनें</string>
+    <string name="choose_method">भुगतान का तरीका चुनें</string>
+    <string name="payment_pending">यह विकल्प तैयार है, लेकिन वास्तविक भुगतान अभी सक्षम नहीं है। पहले सुरक्षित भुगतान गेटवे जोड़ना होगा।</string>
+    <string-array name="language_names"><item>Kiswahili</item><item>English</item><item>Français</item><item>Español</item><item>Português</item><item>العربية</item><item>हिन्दी</item><item>中文</item></string-array>
+    <string-array name="package_options"><item>1 दिन</item><item>7 दिन</item><item>30 दिन</item></string-array>
+    <string-array name="payment_methods"><item>M-Pesa</item><item>Airtel Money</item><item>Mixx by Yas (Tigo Pesa)</item><item>HaloPesa</item><item>Visa / Mastercard</item></string-array>
+</resources>
