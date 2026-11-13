@@ -36,6 +36,9 @@ jobs:
           node --check membership/src/server.js
           node --check membership/public/admin.js
       - name: Build debug APK
+        env:
+          ORG_GRADLE_PROJECT_KEM_SUPABASE_URL: ${{ secrets.KEM_SUPABASE_URL }}
+          ORG_GRADLE_PROJECT_KEM_SUPABASE_ANON_KEY: ${{ secrets.KEM_SUPABASE_ANON_KEY }}
         run: gradle --no-daemon assembleDebug
       - name: Upload APK
         uses: actions/upload-artifact@v4
