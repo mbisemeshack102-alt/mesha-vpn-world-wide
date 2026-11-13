@@ -3,6 +3,8 @@ package com.kemvpn.app
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.res.Configuration
 import android.content.Intent
 import android.net.VpnService
@@ -119,11 +121,24 @@ class MainActivity : Activity() {
                     .setTitle(R.string.choose_method)
                     .setItems(methods) { _, methodIndex ->
                         val selected = "${packages[packageIndex]} • ${methods[methodIndex]}"
-                        AlertDialog.Builder(this)
-                            .setTitle(selected)
-                            .setMessage(R.string.payment_pending)
-                            .setPositiveButton(android.R.string.ok, null)
-                            .show()
+                        if (methodIndex == 1) {
+                            AlertDialog.Builder(this)
+                                .setTitle(selected)
+                                .setMessage(R.string.airtel_payment_instructions)
+                                .setPositiveButton(R.string.copy_number) { _, _ ->
+                                    val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                                    clipboard.setPrimaryClip(ClipData.newPlainText("Airtel Lipa Namba", getString(R.string.airtel_lipa_number)))
+                                    Toast.makeText(this, R.string.number_copied, Toast.LENGTH_SHORT).show()
+                                }
+                                .setNegativeButton(android.R.string.ok, null)
+                                .show()
+                        } else {
+                            AlertDialog.Builder(this)
+                                .setTitle(selected)
+                                .setMessage(R.string.payment_pending)
+                                .setPositiveButton(android.R.string.ok, null)
+                                .show()
+                        }
                     }
                     .setNegativeButton(android.R.string.cancel, null)
                     .show()
