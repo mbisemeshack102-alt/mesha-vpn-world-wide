@@ -45,7 +45,11 @@
         <item>Kiswahili</item><item>English</item><item>Français</item><item>Español</item><item>Português</item><item>العربية</item><item>हिन्दी</item><item>中文</item>
     </string-array>
     <string-array name="package_options">
-        <item>KIFURUSHI CHA SIKU 1</item><item>KIFURUSHI CHA SIKU 7</item><item>KIFURUSHI CHA SIKU 30</item>
+        <item>TSh 500 • Saa 8</item>
+        <item>TSh 1,000 • Siku 1</item>
+        <item>TSh 2,000 • Wiki 1</item>
+        <item>TSh 4,000 • Wiki 2</item>
+        <item>TSh 15,000 • Mwezi 1</item>
     </string-array>
     <string-array name="payment_methods">
         <item>M-Pesa</item><item>Airtel Money</item><item>Mixx by Yas (Tigo Pesa)</item><item>HaloPesa</item><item>Visa / Mastercard</item>
