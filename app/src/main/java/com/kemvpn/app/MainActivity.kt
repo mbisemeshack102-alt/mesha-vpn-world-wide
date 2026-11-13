@@ -76,6 +76,7 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.importProfileButton).setOnClickListener { openProfileFile() }
         findViewById<Button>(R.id.languageButton).setOnClickListener { showLanguagePicker() }
         findViewById<Button>(R.id.paymentButton).setOnClickListener { showSubscriptionPicker() }
+        findViewById<Button>(R.id.adminDashboardButton).setOnClickListener { showAdminDashboard() }
         findViewById<Button>(R.id.vpnSettingsButton).setOnClickListener {
             try {
                 startActivity(Intent(Settings.ACTION_VPN_SETTINGS))
@@ -96,6 +97,64 @@ class MainActivity : Activity() {
         }
     }
 
+
+    private fun showAdminDashboard() {
+        val options = arrayOf(
+            "Muhtasari wa mfumo",
+            "Simamia vifurushi",
+            "Mipangilio ya malipo",
+            "Mipangilio ya VPN"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("KEM VPN • ADMIN DASHBOARD")
+            .setItems(options) { _, choice ->
+                when (choice) {
+                    0 -> AlertDialog.Builder(this)
+                        .setTitle("Muhtasari wa mfumo")
+                        .setMessage("Muunganisho wa seva: Haujaunganishwa\\nMalipo yaliyothibitishwa: Hayapatikani\\nWatumiaji: Takwimu zitasomwa kutoka seva baada ya backend kuunganishwa.")
+                        .setPositiveButton(android.R.string.ok, null).show()
+                    1 -> showPackageManagement()
+                    2 -> AlertDialog.Builder(this)
+                        .setTitle("Mipangilio ya malipo")
+                        .setMessage("Lipa Namba ya Airtel: ${getString(R.string.airtel_lipa_number)}\\nJina: ${getString(R.string.payment_account_name)}\\nUthibitishaji wa malipo bado unahitaji payment gateway na backend salama.")
+                        .setPositiveButton(android.R.string.ok, null).show()
+                    3 -> startActivity(Intent(Settings.ACTION_VPN_SETTINGS))
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showPackageManagement() {
+        val prefs = getSharedPreferences("kem_admin_packages", Context.MODE_PRIVATE)
+        val defaults = arrayOf("KIFURUSHI CHA SIKU 1", "KIFURUSHI CHA SIKU 7", "KIFURUSHI CHA SIKU 30")
+        val saved = (0..2).map { prefs.getString("package_$it", defaults[it]) ?: defaults[it] }.toTypedArray()
+        val labels = arrayOf("Badilisha kifurushi cha siku 1", "Badilisha kifurushi cha siku 7", "Badilisha kifurushi cha siku 30", "Rudisha vifurushi vya mwanzo")
+        AlertDialog.Builder(this)
+            .setTitle("Usimamizi wa vifurushi")
+            .setItems(labels) { _, index ->
+                if (index == 3) {
+                    prefs.edit().clear().apply()
+                    Toast.makeText(this, "Vifurushi vya mwanzo vimerejeshwa", Toast.LENGTH_SHORT).show()
+                    return@setItems
+                }
+                val edit = EditText(this).apply { setText(saved[index]); hint = "Jina la kifurushi" }
+                AlertDialog.Builder(this)
+                    .setTitle("Badilisha kifurushi")
+                    .setView(edit)
+                    .setPositiveButton("HIFADHI") { _, _ ->
+                        val value = edit.text.toString().trim()
+                        if (value.isNotEmpty()) {
+                            prefs.edit().putString("package_$index", value).apply()
+                            Toast.makeText(this, "Kifurushi kimehifadhiwa kwenye simu hii", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
 
     private fun showLanguagePicker() {
         val languages = resources.getStringArray(R.array.language_names)
