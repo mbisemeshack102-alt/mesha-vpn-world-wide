@@ -143,6 +143,13 @@
                 android:textColor="#FFFFFF"
                 android:textSize="18sp"
                 android:textStyle="bold" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Ingiza profaili yako ya WireGuard kwa kubandika maandishi au kuchagua faili la .conf."
+                android:textColor="#A9BEDA"
+                android:textSize="13sp" />
             <EditText
                 android:id="@+id/configInput"
                 android:layout_width="match_parent"
@@ -152,6 +159,8 @@
                 android:gravity="top|start"
                 android:hint="@string/config_hint"
                 android:inputType="textMultiLine|textNoSuggestions"
+                android:importantForAutofill="no"
+                android:saveEnabled="false"
                 android:padding="16dp"
                 android:scrollbars="vertical"
                 android:textColor="#FFFFFF"
