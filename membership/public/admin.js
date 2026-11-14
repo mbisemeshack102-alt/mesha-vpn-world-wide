@@ -31,7 +31,11 @@ async function loadSettings() {
     input.checked = (payment.enabledMethods || []).includes(input.value);
   });
   $('plans').value = JSON.stringify(data.plans || {}, null, 2);
-  $('qr-max-scans').value = data.qr?.maxScans || 3;
+  $('qr-max-scans').value = data.qr?.maxScans || 3;  const wifi = data.wifi || {};
+  $('wifi-router').value = wifi.routerType || 'none';
+  $('wifi-ssid').value = wifi.ssidLabel || '';
+  $('wifi-host').value = wifi.managementHost || '';
+  $('wifi-enabled').checked = Boolean(wifi.enabled);
   $('status').textContent = 'Mipangilio imefunguliwa kwa ruhusa ya mmiliki.';
 }
 $('unlock').addEventListener('click', async () => {
@@ -93,7 +97,13 @@ $('save').addEventListener('click', async () => {
         instructions:$('instructions').value,
         enabledMethods
       },
-      plans
+      plans,
+      wifi:{
+        routerType:$('wifi-router').value,
+        ssidLabel:$('wifi-ssid').value,
+        managementHost:$('wifi-host').value,
+        enabled:$('wifi-enabled').checked
+      }
     };
     const result = await request('/api/admin/settings', {method:'PUT', body:JSON.stringify(body)});
     $('status').textContent = result.message || 'Mipangilio imehifadhiwa.';
@@ -120,4 +130,11 @@ $('load-qr-scans').addEventListener('click', async () => {
       row.append(revoke); host.append(row);
     }
   } catch (error) { $('status').textContent = error.message; }
+});
+
+$('wifi-status').addEventListener('click', async () => {
+  try {
+    const data = await request('/api/admin/wifi/status');
+    $('wifi-status-result').textContent = data.message + ' Hali: ' + data.connectionState + '.';
+  } catch (error) { $('wifi-status-result').textContent = error.message; }
 });
