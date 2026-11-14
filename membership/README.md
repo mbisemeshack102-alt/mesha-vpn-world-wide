@@ -228,3 +228,7 @@ Planned adapter capabilities after router selection and secure setup:
 - Keep WiFi hotspot and WireGuard VPN entitlements separate but manageable in one admin dashboard.
 
 No router is currently connected by this scaffold; it is configuration preparation only.
+
+## Supported WiFi provider/router profiles
+
+The WiFi setup supports provider labels for TP-Link, Airtel, Vodacom and Yas, and stores the exact router model separately. Airtel, Vodacom and Yas are service providers rather than a single router API: their supplied devices may be Huawei, ZTE or other OEM models. The selected provider/model is descriptive configuration only; no generic provider API is assumed. Live client monitoring, voucher provisioning and enforcement must be implemented and tested against the exact model, firmware, supported local API and network topology. Never infer router credentials or expose management ports publicly.
