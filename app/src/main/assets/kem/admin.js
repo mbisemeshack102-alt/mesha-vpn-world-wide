@@ -1,0 +1,146 @@
+'use strict';
+const $ = id => document.getElementById(id);
+const API_BASE=((window.KemConfig&&window.KemConfig.apiBaseUrl())||localStorage.getItem('kem_api_base_url')||'').replace(/\/+$/,'');
+function apiUrl(url){if(!API_BASE)throw new Error('API ya KEM VPN haijaunganishwa. Weka HTTPS URL ya backend kwenye Mipangilio ya Seva.');return API_BASE+url;}
+const TOKEN_KEY = 'kem_admin_session';
+const settings = $('admin-settings');
+const lockPanel = $('admin-lock');
+function token(){ return sessionStorage.getItem(TOKEN_KEY) || ''; }
+function headers(){ return {'content-type':'application/json','authorization':'Bearer '+token()}; }
+async function request(url, options = {}) {
+  const response = await fetch(apiUrl(url), {...options, headers:{...headers(), ...(options.headers || {})}});
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Ombi limeshindikana');
+  return data;
+}
+function showLocked(message='') {
+  settings.hidden = true;
+  lockPanel.hidden = false;
+  $('status').textContent = message;
+}
+function showAdmin() {
+  lockPanel.hidden = true;
+  settings.hidden = false;
+}
+async function loadSettings() {
+  const data = await request('/api/admin/settings');
+  const payment = data.payment || {};
+  $('lipa').value = payment.airtelLipaNumber || '';
+  $('business-number').value = payment.businessNumber || '';
+  $('recipient').value = payment.recipientName || '';
+  $('instructions').value = payment.instructions || '';
+  document.querySelectorAll('#methods input').forEach(input => {
+    input.checked = (payment.enabledMethods || []).includes(input.value);
+  });
+  $('plans').value = JSON.stringify(data.plans || {}, null, 2);
+  $('qr-max-scans').value = data.qr?.maxScans || 3;  const wifi = data.wifi || {};
+  $('wifi-provider').value = wifi.provider || 'none';
+  $('wifi-model').value = wifi.routerModel || '';
+  $('wifi-router').value = wifi.routerType || 'none';
+  $('wifi-ssid').value = wifi.ssidLabel || '';
+  $('wifi-host').value = wifi.managementHost || '';
+  $('wifi-enabled').checked = Boolean(wifi.enabled);
+  $('status').textContent = 'Mipangilio imefunguliwa kwa ruhusa ya mmiliki.';
+}
+$('unlock').addEventListener('click', async () => {
+  const pin = $('pin').value.trim();
+  if (!/^\d{6}$/.test(pin)) { $('status').textContent = 'PIN iwe na tarakimu 6.'; return; }
+  $('unlock').disabled = true;
+  try {
+    const response = await fetch(apiUrl('/api/admin/login'), {
+      method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({pin})
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'PIN haijakubaliwa');
+    sessionStorage.setItem(TOKEN_KEY, data.token);
+    $('pin').value = '';
+    await loadSettings();
+    showAdmin();
+  } catch (error) {
+    sessionStorage.removeItem(TOKEN_KEY);
+    showLocked(error.message);
+  } finally { $('unlock').disabled = false; }
+});
+$('reload').addEventListener('click', async () => {
+  try { await loadSettings(); } catch (error) { sessionStorage.removeItem(TOKEN_KEY); showLocked(error.message); }
+});
+$('lock').addEventListener('click', async () => {
+  try { if (token()) await request('/api/admin/logout', {method:'POST'}); }
+  catch (_) { /* Always clear this browser session locally. */ }
+  sessionStorage.removeItem(TOKEN_KEY);
+  showLocked('Umetoka. Admin imefungwa.');
+});
+$('add-plan').addEventListener('click', () => {
+  try {
+    const plans = JSON.parse($('plans').value || '{}');
+    const ids = Object.keys(plans);
+    if (ids.length >= 100) throw new Error('Umefikia kiwango cha juu cha vifurushi 100.');
+    let n = 1;
+    while (plans['custom_' + n]) n++;
+    const id = 'custom_' + n;
+    plans[id] = {
+      name: 'Kifurushi kipya ' + n,
+      speedMbps: 5,
+      devices: 1,
+      price: { day: 500, week: 1500, month: 5000 },
+      data: { day: 1, week: 5, month: 10 }
+    };
+    $('plans').value = JSON.stringify(plans, null, 2);
+    $('status').textContent = 'Kifurushi kimeongezwa kwenye orodha. Badilisha jina, bei na GB kisha bonyeza Hifadhi mipangilio.';
+  } catch (error) { $('status').textContent = 'Hitilafu: ' + error.message; }
+});
+$('save').addEventListener('click', async () => {
+  try {
+    const plans = JSON.parse($('plans').value);
+    const enabledMethods = [...document.querySelectorAll('#methods input:checked')].map(input => input.value);
+    const body = {
+      payment:{
+        airtelLipaNumber:$('lipa').value,
+        businessNumber:$('business-number').value,
+        recipientName:$('recipient').value,
+        instructions:$('instructions').value,
+        enabledMethods
+      },
+      plans,
+      wifi:{
+        provider:$('wifi-provider').value,
+        routerModel:$('wifi-model').value,
+        routerType:$('wifi-router').value,
+        ssidLabel:$('wifi-ssid').value,
+        managementHost:$('wifi-host').value,
+        enabled:$('wifi-enabled').checked
+      }
+    };
+    const result = await request('/api/admin/settings', {method:'PUT', body:JSON.stringify(body)});
+    $('status').textContent = result.message || 'Mipangilio imehifadhiwa.';
+  } catch (error) { $('status').textContent = 'Hitilafu: ' + error.message; }
+});
+(async () => {
+  if (!token()) return showLocked();
+  try { await loadSettings(); showAdmin(); }
+  catch (error) { sessionStorage.removeItem(TOKEN_KEY); showLocked('Session imeisha. Ingiza PIN tena.'); }
+})();
+
+$('load-qr-scans').addEventListener('click', async () => {
+  try {
+    const data = await request('/api/admin/qr-scans');
+    const host = $('qr-scan-history');
+    host.textContent = '';
+    if (!data.scans.length) { host.textContent = 'Bado hakuna QR iliyoscan.'; return; }
+    for (const scan of data.scans) {
+      const row = document.createElement('p');
+      row.textContent = scan.plan_id + ' · ' + scan.duration + ' · ' + new Date(scan.scanned_at).toLocaleString('sw-TZ') + ' · QR #' + scan.qr_id;
+      const revoke = document.createElement('button');
+      revoke.type = 'button'; revoke.textContent = 'Zuia QR';
+      revoke.addEventListener('click', async () => { try { await request('/api/admin/qr/' + scan.qr_id + '/revoke', {method:'POST'}); revoke.disabled = true; revoke.textContent = 'Imefungwa'; } catch (error) { $('status').textContent = error.message; } });
+      row.append(revoke); host.append(row);
+    }
+  } catch (error) { $('status').textContent = error.message; }
+});
+
+$('wifi-status').addEventListener('click', async () => {
+  try {
+    const data = await request('/api/admin/wifi/status');
+    $('wifi-status-result').textContent = data.message + ' Hali: ' + data.connectionState + '.';
+  } catch (error) { $('wifi-status-result').textContent = error.message; }
+});
