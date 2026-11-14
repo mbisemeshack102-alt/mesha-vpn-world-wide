@@ -354,15 +354,22 @@ app.put('/api/admin/settings', adminOnly, (req, res) => {
   if (number.length > 32 || (businessNumberInput && !businessNumber) || recipient.length > 100 || instructions.length > 500) {
     return res.status(400).json({ error: 'Payment settings are too long.' });
   }
+  const planIds = Object.keys(plans);
+  if (planIds.length < 1 || planIds.length > 100) {
+    return res.status(400).json({ error: 'Weka angalau kifurushi kimoja; kiwango cha juu ni 100.' });
+  }
   const cleanPlans = {};
-  for (const id of ['bronze','silver','gold','platinum']) {
+  for (const id of planIds) {
+    if (!/^[a-z0-9_-]{2,40}$/.test(id) || ['__proto__','constructor','prototype'].includes(id)) {
+      return res.status(400).json({ error: 'Kitambulisho cha kifurushi si sahihi: ' + id });
+    }
     const p = plans[id];
-    if (!p || !p.price || !p.data) return res.status(400).json({ error: 'All four membership plans are required.' });
+    if (!p || typeof p !== 'object' || !p.price || !p.data) return res.status(400).json({ error: 'Kila kifurushi lazima kiwe na price na data.' });
     const name = String(p.name || '').trim();
     const speedMbps = Number(p.speedMbps), devices = Number(p.devices);
-    if (!name || name.length > 30 || !Number.isInteger(speedMbps) || speedMbps < 1 || speedMbps > 1000 ||
+    if (!name || name.length > 50 || !Number.isInteger(speedMbps) || speedMbps < 1 || speedMbps > 1000 ||
         !Number.isInteger(devices) || devices < 1 || devices > 20) {
-      return res.status(400).json({ error: 'Invalid plan name, speed, or device limit.' });
+      return res.status(400).json({ error: 'Jina, kasi au idadi ya vifaa ya kifurushi si sahihi.' });
     }
     const price = {}, data = {};
     for (const duration of Object.keys(DURATIONS)) {
@@ -370,7 +377,7 @@ app.put('/api/admin/settings', adminOnly, (req, res) => {
       data[duration] = Number(p.data[duration]);
       if (!Number.isInteger(price[duration]) || price[duration] < 0 || price[duration] > 100000000 ||
           !Number.isFinite(data[duration]) || data[duration] <= 0 || data[duration] > 100000) {
-        return res.status(400).json({ error: 'Invalid plan price or data allowance.' });
+        return res.status(400).json({ error: 'Bei au kiwango cha data cha kifurushi si sahihi.' });
       }
     }
     cleanPlans[id] = { name, speedMbps, devices, price, data };
