@@ -1,12 +1,14 @@
 'use strict';
 const $ = id => document.getElementById(id);
+const API_BASE=((window.KemConfig&&window.KemConfig.apiBaseUrl())||localStorage.getItem('kem_api_base_url')||'').replace(/\/+$/,'');
+function apiUrl(url){if(!API_BASE)throw new Error('API ya KEM VPN haijaunganishwa. Weka HTTPS URL ya backend kwenye Mipangilio ya Seva.');return API_BASE+url;}
 const TOKEN_KEY = 'kem_admin_session';
 const settings = $('admin-settings');
 const lockPanel = $('admin-lock');
 function token(){ return sessionStorage.getItem(TOKEN_KEY) || ''; }
 function headers(){ return {'content-type':'application/json','authorization':'Bearer '+token()}; }
 async function request(url, options = {}) {
-  const response = await fetch(url, {...options, headers:{...headers(), ...(options.headers || {})}});
+  const response = await fetch(apiUrl(url), {...options, headers:{...headers(), ...(options.headers || {})}});
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'Ombi limeshindikana');
   return data;
@@ -45,7 +47,7 @@ $('unlock').addEventListener('click', async () => {
   if (!/^\d{6}$/.test(pin)) { $('status').textContent = 'PIN iwe na tarakimu 6.'; return; }
   $('unlock').disabled = true;
   try {
-    const response = await fetch('/api/admin/login', {
+    const response = await fetch(apiUrl('/api/admin/login'), {
       method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({pin})
     });
     const data = await response.json().catch(() => ({}));
