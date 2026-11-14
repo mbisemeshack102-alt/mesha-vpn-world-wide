@@ -283,7 +283,7 @@ app.get('/api/plans', (_req, res) => {
   res.json({ currency: 'TZS', plans: result, pricesAreDraft: true });
 });
 app.get('/api/payment-settings', (_req, res) => res.json(publicPaymentSettings()));
-app.get('/api/admin/settings', adminOnly, (_req, res) => {
+app.post('/api/admin/logout', adminOnly, (req, res) => {\n  const bearer = String(req.headers.authorization || '').replace(/^Bearer\\s+/i, '');\n  const tokenHash = crypto.createHash('sha256').update(bearer).digest('hex');\n  db.prepare('UPDATE admin_sessions SET revoked_at = ? WHERE token_hash = ?').run(nowIso(), tokenHash);\n  res.json({ ok: true, message: 'Admin session imefungwa.' });\n});\napp.get('/api/admin/settings', adminOnly, (_req, res) => {
   res.json({ payment: readSetting('payment', DEFAULT_PAYMENT_SETTINGS), plans: currentPlans() });
 });
 app.put('/api/admin/settings', adminOnly, (req, res) => {
