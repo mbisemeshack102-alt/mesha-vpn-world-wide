@@ -186,3 +186,13 @@ The API uses Node.js 20+ built-in `fetch`; no additional payment SDK is required
 - The dashboard at `/admin/` now has an owner PIN lock and a manual lock button.
 - If `ADMIN_PIN_HASH` is blank, PIN login is disabled. Configure it on the VPS before using the dashboard. Never put the PIN or its hash in the APK or GitHub.
 - This protects the management dashboard; it does not yet add customer accounts, WireGuard peer provisioning, or in-app admin screens.
+
+
+## Customer verification codes (new)
+
+After an order is confirmed as paid (either by a verified ClickPesa payment-status check/webhook or by an owner-confirmed manual payment), the API creates one unique access verification code for that order. The code is tied to the purchased plan and expires at the exact same timestamp as the resulting subscription: 1 day, 7 days, or 30 days from activation. Pending, rejected, and unverified orders do not receive codes.
+
+- `GET /api/access-codes` — authenticated customer endpoint returning that customer's currently valid codes and expiry timestamps.
+- `POST /api/access-codes/verify` — authenticated JSON: `{ "code": "KEM-XXXXXXXXXXXX" }`; returns valid only when the code belongs to the logged-in user and its subscription has not expired or been revoked.
+
+Codes are generated using cryptographic randomness, stored encrypted at rest (AES-256-GCM) with a SHA-256 lookup hash, and never exposed to other customers. Keep `TOKEN_SECRET` private and stable: changing it will prevent decrypting previously issued codes. This code layer does not itself provision or enforce a WireGuard peer; VPN server integration is still required before the code can grant network access.
