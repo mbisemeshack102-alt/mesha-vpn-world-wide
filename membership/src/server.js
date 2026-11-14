@@ -11,6 +11,21 @@ const QRCode = require('qrcode');
 
 const app = express();
 app.disable('x-powered-by');
+// Android bundles its portal pages under file:// (Origin: null). For hosted
+// browser portals, add their exact HTTPS origins to CORS_ALLOWED_ORIGINS.
+const allowedCorsOrigins = (process.env.CORS_ALLOWED_ORIGINS || 'null')
+  .split(',').map(value => value.trim()).filter(Boolean);
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && (allowedCorsOrigins.includes('*') || allowedCorsOrigins.includes(origin))) {
+    res.setHeader('Access-Control-Allow-Origin', allowedCorsOrigins.includes('*') ? '*' : origin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS || 0);
 if (Number.isInteger(trustProxyHops) && trustProxyHops > 0 && trustProxyHops <= 5) app.set('trust proxy', trustProxyHops);
 app.use(helmet());
