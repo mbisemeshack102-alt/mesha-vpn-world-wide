@@ -30,7 +30,8 @@ async function loadSettings() {
   document.querySelectorAll('#methods input').forEach(input => {
     input.checked = (payment.enabledMethods || []).includes(input.value);
   });
-  $('plans').value = JSON.stringify(data.plans || {}, null, 2);\n  $('qr-max-scans').value = data.qr?.maxScans || 3;
+  $('plans').value = JSON.stringify(data.plans || {}, null, 2);
+  $('qr-max-scans').value = data.qr?.maxScans || 3;
   $('status').textContent = 'Mipangilio imefunguliwa kwa ruhusa ya mmiliki.';
 }
 $('unlock').addEventListener('click', async () => {
