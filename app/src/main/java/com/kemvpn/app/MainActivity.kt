@@ -77,7 +77,12 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.importProfileButton).setOnClickListener { openProfileFile() }
         findViewById<Button>(R.id.languageButton).setOnClickListener { showLanguagePicker() }
         findViewById<Button>(R.id.paymentButton).setOnClickListener { showSubscriptionPicker() }
-        findViewById<Button>(R.id.adminDashboardButton).setOnClickListener { showAdminDashboard() }
+        findViewById<Button>(R.id.customerPortalButton).setOnClickListener {
+            startActivity(Intent(this, WebPortalActivity::class.java).putExtra("portal", "customer"))
+        }
+        findViewById<Button>(R.id.adminDashboardButton).setOnClickListener {
+            startActivity(Intent(this, WebPortalActivity::class.java).putExtra("portal", "admin"))
+        }
         findViewById<Button>(R.id.aiAssistantButton).setOnClickListener { showAiAssistant() }
         findViewById<Button>(R.id.vpnSettingsButton).setOnClickListener {
             try {
