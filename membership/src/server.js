@@ -353,7 +353,7 @@ app.post('/api/admin/logout', adminOnly, (req, res) => {
   res.json({ ok: true, message: 'Admin session imefungwa.' });
 });
 app.get('/api/admin/settings', adminOnly, (_req, res) => {
-  res.json({ payment: readSetting('payment', DEFAULT_PAYMENT_SETTINGS), plans: currentPlans() });
+  res.json({ payment: readSetting('payment', DEFAULT_PAYMENT_SETTINGS), plans: currentPlans(), qr: readSetting('qr', { maxScans: 3 }) });
 });
 app.put('/api/admin/settings', adminOnly, (req, res) => {
   const body = req.body || {};
@@ -409,6 +409,7 @@ app.put('/api/admin/settings', adminOnly, (req, res) => {
     enabledMethods: methods, instructions
   });
   writeSetting('plans', cleanPlans);
+  writeSetting('qr', { maxScans });
   res.json({ ok: true, message: 'Settings saved.' });
 });
 app.use('/admin', express.static(path.join(__dirname, '../public'), { index: 'admin.html' }));
