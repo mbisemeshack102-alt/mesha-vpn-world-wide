@@ -61,6 +61,25 @@ $('lock').addEventListener('click', async () => {
   sessionStorage.removeItem(TOKEN_KEY);
   showLocked('Umetoka. Admin imefungwa.');
 });
+$('add-plan').addEventListener('click', () => {
+  try {
+    const plans = JSON.parse($('plans').value || '{}');
+    const ids = Object.keys(plans);
+    if (ids.length >= 100) throw new Error('Umefikia kiwango cha juu cha vifurushi 100.');
+    let n = 1;
+    while (plans['custom_' + n]) n++;
+    const id = 'custom_' + n;
+    plans[id] = {
+      name: 'Kifurushi kipya ' + n,
+      speedMbps: 5,
+      devices: 1,
+      price: { day: 500, week: 1500, month: 5000 },
+      data: { day: 1, week: 5, month: 10 }
+    };
+    $('plans').value = JSON.stringify(plans, null, 2);
+    $('status').textContent = 'Kifurushi kimeongezwa kwenye orodha. Badilisha jina, bei na GB kisha bonyeza Hifadhi mipangilio.';
+  } catch (error) { $('status').textContent = 'Hitilafu: ' + error.message; }
+});
 $('save').addEventListener('click', async () => {
   try {
     const plans = JSON.parse($('plans').value);
