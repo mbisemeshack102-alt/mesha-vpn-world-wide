@@ -358,7 +358,10 @@ app.get('/api/admin/settings', adminOnly, (_req, res) => {
 app.put('/api/admin/settings', adminOnly, (req, res) => {
   const body = req.body || {};
   const payment = body.payment;
-  const plans = body.plans;\n  const qr = body.qr || { maxScans: 3 };\n  const maxScans = Number(qr.maxScans);\n  if (!Number.isInteger(maxScans) || maxScans < 1 || maxScans > 1000) return res.status(400).json({ error: 'Kikomo cha QR scans kiwe kati ya 1 na 1000.' });
+  const plans = body.plans;
+  const qr = body.qr || { maxScans: 3 };
+  const maxScans = Number(qr.maxScans);
+  if (!Number.isInteger(maxScans) || maxScans < 1 || maxScans > 1000) return res.status(400).json({ error: 'Kikomo cha QR scans kiwe kati ya 1 na 1000.' });
   const allowedMethods = new Set(['airtel_money','mpesa','mixx_by_yas','halopesa','bank','visa','mastercard']);
   if (!payment || typeof payment !== 'object' || !plans || typeof plans !== 'object') {
     return res.status(400).json({ error: 'Payment and plans settings are required.' });
