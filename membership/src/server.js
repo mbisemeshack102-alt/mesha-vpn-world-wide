@@ -353,14 +353,23 @@ app.post('/api/admin/logout', adminOnly, (req, res) => {
   res.json({ ok: true, message: 'Admin session imefungwa.' });
 });
 app.get('/api/admin/settings', adminOnly, (_req, res) => {
-  res.json({ payment: readSetting('payment', DEFAULT_PAYMENT_SETTINGS), plans: currentPlans(), qr: readSetting('qr', { maxScans: 3 }) });
+  res.json({ payment: readSetting('payment', DEFAULT_PAYMENT_SETTINGS), plans: currentPlans(), qr: readSetting('qr', { maxScans: 3 }), wifi: readSetting('wifi', { routerType: 'none', ssidLabel: '', managementHost: '', enabled: false }) });
 });
 app.put('/api/admin/settings', adminOnly, (req, res) => {
   const body = req.body || {};
   const payment = body.payment;
   const plans = body.plans;
   const qr = body.qr || { maxScans: 3 };
+  const wifi = body.wifi || readSetting('wifi', { routerType: 'none', ssidLabel: '', managementHost: '', enabled: false });
   const maxScans = Number(qr.maxScans);
+  const allowedRouters = new Set(['none','mikrotik','tplink','tenda','huawei','openwrt','other']);
+  const routerType = String(wifi.routerType || 'none').toLowerCase();
+  const ssidLabel = String(wifi.ssidLabel || '').trim();
+  const managementHost = String(wifi.managementHost || '').trim();
+  if (!allowedRouters.has(routerType) || ssidLabel.length > 32 || managementHost.length > 253 ||
+      (managementHost && !/^[a-z0-9.-]+$/i.test(managementHost))) {
+    return res.status(400).json({ error: 'Taarifa za router/WiFi si sahihi.' });
+  }
   if (!Number.isInteger(maxScans) || maxScans < 1 || maxScans > 1000) return res.status(400).json({ error: 'Kikomo cha QR scans kiwe kati ya 1 na 1000.' });
   const allowedMethods = new Set(['airtel_money','mpesa','mixx_by_yas','halopesa','bank','visa','mastercard']);
   if (!payment || typeof payment !== 'object' || !plans || typeof plans !== 'object') {
@@ -410,7 +419,18 @@ app.put('/api/admin/settings', adminOnly, (req, res) => {
   });
   writeSetting('plans', cleanPlans);
   writeSetting('qr', { maxScans });
+  writeSetting('wifi', { routerType, ssidLabel, managementHost, enabled: Boolean(wifi.enabled) });
   res.json({ ok: true, message: 'Settings saved.' });
+});
+app.get('/api/admin/wifi/status', adminOnly, (_req, res) => {
+  const config = readSetting('wifi', { routerType: 'none', ssidLabel: '', managementHost: '', enabled: false });
+  res.json({
+    configured: config.routerType !== 'none' && Boolean(config.managementHost),
+    routerType: config.routerType, ssidLabel: config.ssidLabel, managementHost: config.managementHost,
+    enabledForFutureIntegration: Boolean(config.enabled), connectionState: 'not_connected',
+    connectedClients: null, integrationReady: false,
+    message: 'Router API credentials na muunganisho wa LAN bado havijawekwa. Hakuna wateja au vifaa vinavyodhibitiwa kwa sasa.'
+  });
 });
 app.use('/admin', express.static(path.join(__dirname, '../public'), { index: 'admin.html' }));
 app.use(express.static(path.join(__dirname, '../public'), { index: 'index.html' }));
