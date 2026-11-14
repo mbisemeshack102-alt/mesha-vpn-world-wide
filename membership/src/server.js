@@ -82,6 +82,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     access_code_id INTEGER NOT NULL UNIQUE REFERENCES access_codes(id),
     token_hash TEXT NOT NULL UNIQUE,
+    token_ciphertext TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL,
     revoked_at TEXT
   );
@@ -93,6 +94,9 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_qr_scans_token ON qr_scans(qr_token_id, scanned_at);
 `);
+
+const qrColumns = db.prepare('PRAGMA table_info(qr_tokens)').all().map(column => column.name);
+if (!qrColumns.includes('token_ciphertext')) db.exec("ALTER TABLE qr_tokens ADD COLUMN token_ciphertext TEXT NOT NULL DEFAULT ''");
 
 const orderColumns = db.prepare('PRAGMA table_info(orders)').all().map(column => column.name);
 if (!orderColumns.includes('checkout_url')) db.exec('ALTER TABLE orders ADD COLUMN checkout_url TEXT');
@@ -533,18 +537,22 @@ app.get('/api/qr-codes', auth, async (req, res) => {
     }
     const result = [];
     for (const row of rows) {
-      let qr = db.prepare('SELECT id, token_hash, revoked_at FROM qr_tokens WHERE access_code_id=?').get(row.access_code_id);
+      let qr = db.prepare('SELECT id, token_hash, token_ciphertext, revoked_at FROM qr_tokens WHERE access_code_id=?').get(row.access_code_id);
       if (!qr) {
-        const token = crypto.randomBytes(32).toString('base64url');
-        const info = db.prepare('INSERT INTO qr_tokens(access_code_id,token_hash,created_at) VALUES(?,?,?)')
-          .run(row.access_code_id, hashQrToken(token), nowIso());
-        qr = { id: Number(info.lastInsertRowid), token_hash: hashQrToken(token), revoked_at: null };
+        const secret = crypto.randomBytes(32).toString('base64url');
+        const info = db.prepare('INSERT INTO qr_tokens(access_code_id,token_hash,token_ciphertext,created_at) VALUES(?,?,?,?)')
+          .run(row.access_code_id, hashQrToken(secret), sealAccessCode(secret), nowIso());
+        qr = { id: Number(info.lastInsertRowid), token_ciphertext: sealAccessCode(secret), revoked_at: null };
       }
       if (qr.revoked_at) continue;
-      const tokenRow = db.prepare('SELECT token_hash FROM qr_tokens WHERE id=?').get(qr.id);
-      const token = tokenRow.token_hash; // token is never recoverable from its hash; issue a fresh one below when needed.
-      const secret = crypto.randomBytes(32).toString('base64url');
-      db.prepare('UPDATE qr_tokens SET token_hash=? WHERE id=?').run(hashQrToken(secret), qr.id);
+      let secret;
+      if (qr.token_ciphertext) {
+        secret = unsealAccessCode(qr.token_ciphertext);
+      } else {
+        secret = crypto.randomBytes(32).toString('base64url');
+        db.prepare('UPDATE qr_tokens SET token_hash=?, token_ciphertext=? WHERE id=?')
+          .run(hashQrToken(secret), sealAccessCode(secret), qr.id);
+      }
       const url = baseUrl.replace(/\/$/, '') + '/verify/qr/' + encodeURIComponent(secret);
       const scanCount = db.prepare('SELECT COUNT(*) AS count FROM qr_scans WHERE qr_token_id=?').get(qr.id).count;
       result.push({ planId: row.plan_id, duration: row.duration, expiresAt: row.expires_at, qrDataUrl: await QRCode.toDataURL(url, { width: 260, margin: 1 }), scans: scanCount, maxScans: qrScanLimit() });
