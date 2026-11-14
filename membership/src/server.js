@@ -83,6 +83,7 @@ const DURATIONS = { day: 1, week: 7, month: 30 };
 const DEFAULT_PAYMENT_SETTINGS = {
   provider: process.env.PAYMENT_PROVIDER || 'manual_review',
   airtelLipaNumber: '',
+  businessNumber: '',
   recipientName: '',
   enabledMethods: ['airtel_money'],
   instructions: 'Payment instructions will be shown here after the administrator configures them.'
@@ -116,6 +117,7 @@ function publicPaymentSettings() {
   return {
     provider: saved.provider,
     airtelLipaNumber: saved.airtelLipaNumber,
+    businessNumber: saved.businessNumber || '',
     recipientName: saved.recipientName,
     enabledMethods: saved.enabledMethods,
     instructions: saved.instructions
@@ -313,9 +315,11 @@ app.put('/api/admin/settings', adminOnly, (req, res) => {
   const methods = Array.isArray(payment.enabledMethods) ? [...new Set(payment.enabledMethods)] : [];
   if (methods.some(method => !allowedMethods.has(method))) return res.status(400).json({ error: 'Unsupported payment method.' });
   const number = String(payment.airtelLipaNumber || '').trim();
+  const businessNumberInput = String(payment.businessNumber || '').trim();
+  const businessNumber = businessNumberInput ? normalizePhone(businessNumberInput) : '';
   const recipient = String(payment.recipientName || '').trim();
   const instructions = String(payment.instructions || '').trim();
-  if (number.length > 32 || recipient.length > 100 || instructions.length > 500) {
+  if (number.length > 32 || (businessNumberInput && !businessNumber) || recipient.length > 100 || instructions.length > 500) {
     return res.status(400).json({ error: 'Payment settings are too long.' });
   }
   const cleanPlans = {};
@@ -340,7 +344,7 @@ app.put('/api/admin/settings', adminOnly, (req, res) => {
     cleanPlans[id] = { name, speedMbps, devices, price, data };
   }
   writeSetting('payment', {
-    provider: 'manual_review', airtelLipaNumber: number, recipientName: recipient,
+    provider: 'manual_review', airtelLipaNumber: number, businessNumber, recipientName: recipient,
     enabledMethods: methods, instructions
   });
   writeSetting('plans', cleanPlans);
