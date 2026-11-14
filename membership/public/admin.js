@@ -30,7 +30,7 @@ async function loadSettings() {
   document.querySelectorAll('#methods input').forEach(input => {
     input.checked = (payment.enabledMethods || []).includes(input.value);
   });
-  $('plans').value = JSON.stringify(data.plans || {}, null, 2);
+  $('plans').value = JSON.stringify(data.plans || {}, null, 2);\n  $('qr-max-scans').value = data.qr?.maxScans || 3;
   $('status').textContent = 'Mipangilio imefunguliwa kwa ruhusa ya mmiliki.';
 }
 $('unlock').addEventListener('click', async () => {
@@ -103,3 +103,17 @@ $('save').addEventListener('click', async () => {
   try { await loadSettings(); showAdmin(); }
   catch (error) { sessionStorage.removeItem(TOKEN_KEY); showLocked('Session imeisha. Ingiza PIN tena.'); }
 })();
+
+$('load-qr-scans').addEventListener('click', async () => {
+  try {
+    const data = await request('/api/admin/qr-scans');
+    const host = $('qr-scan-history');
+    host.textContent = '';
+    if (!data.scans.length) { host.textContent = 'Bado hakuna QR iliyoscan.'; return; }
+    for (const scan of data.scans) {
+      const row = document.createElement('p');
+      row.textContent = scan.plan_id + ' · ' + scan.duration + ' · ' + new Date(scan.scanned_at).toLocaleString('sw-TZ') + ' · QR #' + scan.qr_id;
+      host.append(row);
+    }
+  } catch (error) { $('status').textContent = error.message; }
+});
