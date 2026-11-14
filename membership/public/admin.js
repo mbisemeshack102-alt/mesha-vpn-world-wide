@@ -32,6 +32,8 @@ async function loadSettings() {
   });
   $('plans').value = JSON.stringify(data.plans || {}, null, 2);
   $('qr-max-scans').value = data.qr?.maxScans || 3;  const wifi = data.wifi || {};
+  $('wifi-provider').value = wifi.provider || 'none';
+  $('wifi-model').value = wifi.routerModel || '';
   $('wifi-router').value = wifi.routerType || 'none';
   $('wifi-ssid').value = wifi.ssidLabel || '';
   $('wifi-host').value = wifi.managementHost || '';
@@ -99,6 +101,8 @@ $('save').addEventListener('click', async () => {
       },
       plans,
       wifi:{
+        provider:$('wifi-provider').value,
+        routerModel:$('wifi-model').value,
         routerType:$('wifi-router').value,
         ssidLabel:$('wifi-ssid').value,
         managementHost:$('wifi-host').value,
