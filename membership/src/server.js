@@ -510,11 +510,15 @@ app.post('/api/admin/orders/:id/confirm', adminOnly, (req, res) => {
   const reference = String(req.body.paymentReference || '').trim();
   if (!order) return res.status(404).json({ error: 'Pending order not found.' });
   if (!reference || reference.length > 100) return res.status(400).json({ error: 'A valid payment reference is required.' });
-  try { activatePaidOrder(order, reference); } catch (e) {
-    if (String(e.code).startsWith('SQLITE_CONSTRAINT')) return res.status(409).json({ error: 'This payment reference has already been used.' });
+  try {
+    const activated = activatePaidOrder(order, reference);
+    if (!activated) return res.status(409).json({ error: 'Order was already processed.' });
+  } catch (e) {
+    if (String(e.code).startsWith('SQLITE_CONSTRAINT')) return res.status(409).json({ error: 'This payment reference or access code has already been used.' });
     throw e;
   }
-  res.json({ ok: true, orderId: order.id, activatedUntil: expiry.toISOString() });
+  const subscription = db.prepare('SELECT expires_at FROM subscriptions WHERE user_id = ? ORDER BY id DESC LIMIT 1').get(order.user_id);
+  res.json({ ok: true, orderId: order.id, activatedUntil: subscription && subscription.expires_at });
 });
 
 app.use((err, _req, res, _next) => {
