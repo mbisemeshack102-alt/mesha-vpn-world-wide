@@ -66,6 +66,17 @@ db.exec(`
     status TEXT NOT NULL CHECK(status IN ('active','expired','revoked'))
   );
   CREATE INDEX IF NOT EXISTS idx_sub_user_expiry ON subscriptions(user_id, expires_at);
+  CREATE TABLE IF NOT EXISTS access_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    order_id TEXT NOT NULL UNIQUE REFERENCES orders(id),
+    code_hash TEXT NOT NULL UNIQUE,
+    code_ciphertext TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    revoked_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_access_codes_user_expiry ON access_codes(user_id, expires_at);
 `);
 
 const orderColumns = db.prepare('PRAGMA table_info(orders)').all().map(column => column.name);
@@ -134,6 +145,23 @@ function normalizePhone(value) {
   if (/^0[67]\d{8}$/.test(digits)) return '255' + digits.slice(1);
   if (/^255[67]\d{8}$/.test(digits)) return digits;
   return null;
+}
+function sealAccessCode(code) {
+  const key = crypto.createHash('sha256').update(TOKEN_SECRET).digest();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const encrypted = Buffer.concat([cipher.update(code, 'utf8'), cipher.final()]);
+  return [iv.toString('base64url'), cipher.getAuthTag().toString('base64url'), encrypted.toString('base64url')].join('.');
+}
+function unsealAccessCode(value) {
+  const [iv, tag, encrypted] = String(value).split('.');
+  const key = crypto.createHash('sha256').update(TOKEN_SECRET).digest();
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'base64url'));
+  decipher.setAuthTag(Buffer.from(tag, 'base64url'));
+  return Buffer.concat([decipher.update(Buffer.from(encrypted, 'base64url')), decipher.final()]).toString('utf8');
+}
+function generateAccessCode() {
+  return 'KEM-' + crypto.randomBytes(6).toString('hex').toUpperCase();
 }
 function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
   const hash = crypto.scryptSync(password, salt, 64).toString('hex');
@@ -260,6 +288,10 @@ function activatePaidOrder(order, paymentReference) {
     if (result.changes !== 1) return false;
     db.prepare("INSERT INTO subscriptions(user_id,plan_id,duration,data_gb,device_limit,speed_mbps,starts_at,expires_at,status) VALUES(?,?,?,?,?,?,?,?, 'active')")
       .run(order.user_id, order.plan_id, order.duration, plan.data[order.duration], plan.devices, plan.speedMbps, start.toISOString(), expiry.toISOString());
+    const code = generateAccessCode();
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    db.prepare('INSERT INTO access_codes(user_id,order_id,code_hash,code_ciphertext,expires_at,created_at) VALUES(?,?,?,?,?,?)')
+      .run(order.user_id, order.id, codeHash, sealAccessCode(code), expiry.toISOString(), start.toISOString());
     return true;
   })();
 }
@@ -449,6 +481,21 @@ app.post('/api/payments/clickpesa/webhook', async (req, res) => {
     console.error('ClickPesa webhook verification failed:', error.message);
     res.status(400).json({ error: 'Payment notification could not be verified.' });
   }
+});
+
+app.get('/api/access-codes', auth, (req, res) => {
+  const rows = db.prepare('SELECT ac.code_ciphertext, ac.expires_at, ac.created_at, o.plan_id, o.duration FROM access_codes ac JOIN orders o ON o.id = ac.order_id WHERE ac.user_id = ? AND ac.revoked_at IS NULL AND ac.expires_at > ? ORDER BY ac.created_at DESC').all(req.user.id, nowIso());
+  const codes = rows.map(row => ({ code: unsealAccessCode(row.code_ciphertext), planId: row.plan_id, duration: row.duration, expiresAt: row.expires_at, createdAt: row.created_at }));
+  res.json({ codes });
+});
+
+app.post('/api/access-codes/verify', authAttemptLimiter, (req, res) => {
+  const code = String(req.body.code || '').trim().toUpperCase();
+  if (!/^KEM-[A-F0-9]{12}$/.test(code)) return res.status(400).json({ valid: false, error: 'Verification code si sahihi.' });
+  const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+  const row = db.prepare('SELECT ac.expires_at, ac.revoked_at, s.status AS subscription_status FROM access_codes ac JOIN subscriptions s ON s.user_id = ac.user_id AND s.expires_at = ac.expires_at WHERE ac.code_hash = ? AND ac.user_id = ? ORDER BY s.id DESC LIMIT 1').get(codeHash, req.user.id);
+  if (!row || row.revoked_at || row.expires_at <= nowIso() || row.subscription_status !== 'active') return res.status(403).json({ valid: false, error: 'Code imeisha muda au si halali.' });
+  res.json({ valid: true, expiresAt: row.expires_at });
 });
 
 app.get('/api/orders', auth, (req, res) => {
