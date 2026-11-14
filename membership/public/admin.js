@@ -24,6 +24,7 @@ async function loadSettings() {
   const data = await request('/api/admin/settings');
   const payment = data.payment || {};
   $('lipa').value = payment.airtelLipaNumber || '';
+  $('business-number').value = payment.businessNumber || '';
   $('recipient').value = payment.recipientName || '';
   $('instructions').value = payment.instructions || '';
   document.querySelectorAll('#methods input').forEach(input => {
@@ -67,6 +68,7 @@ $('save').addEventListener('click', async () => {
     const body = {
       payment:{
         airtelLipaNumber:$('lipa').value,
+        businessNumber:$('business-number').value,
         recipientName:$('recipient').value,
         instructions:$('instructions').value,
         enabledMethods
