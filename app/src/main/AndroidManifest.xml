@@ -9,6 +9,7 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <activity android:name=".WebPortalActivity" android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
