@@ -232,3 +232,20 @@ No router is currently connected by this scaffold; it is configuration preparati
 ## Supported WiFi provider/router profiles
 
 The WiFi setup supports provider labels for TP-Link, Airtel, Vodacom and Yas, and stores the exact router model separately. Airtel, Vodacom and Yas are service providers rather than a single router API: their supplied devices may be Huawei, ZTE or other OEM models. The selected provider/model is descriptive configuration only; no generic provider API is assumed. Live client monitoring, voucher provisioning and enforcement must be implemented and tested against the exact model, firmware, supported local API and network topology. Never infer router credentials or expose management ports publicly.
+
+
+## Android hotspot connectivity test (new)
+
+A public, read-only test page is available at `/hotspot-test.html`. Open it on the Android phone that shares its mobile-data connection and on a second phone connected to that phone's hotspot. The page checks the browser's online indicator and requests the API's existing `GET /health` endpoint without authentication.
+
+This is only a connectivity/API reachability check. It does not inspect Android hotspot clients, create a VPN tunnel, provision WireGuard peers, or make a phone reachable from the public internet. The API must first be deployed on a reachable HTTPS host for the API check to pass. A remote WireGuard test still requires a public VPS/server and configured peers; mobile carrier CGNAT commonly prevents direct inbound connections to a phone hotspot.
+
+### Quick test
+
+1. Deploy the membership API securely (HTTPS) and confirm `/health` returns `{ "ok": true }`.
+2. On Android, enable mobile data and Personal Hotspot.
+3. Connect a second phone to that hotspot.
+4. Open `https://YOUR_API_HOST/hotspot-test.html` on both phones and tap **Jaribu tena**.
+5. Confirm that both the network indicator and API check pass. Then test customer registration/login and the dashboard separately.
+
+Do not share admin keys, customer passwords, WireGuard private keys, or payment secrets while testing. Confirm that the mobile operator's plan permits hotspot sharing and commercial resale before offering paid access.
