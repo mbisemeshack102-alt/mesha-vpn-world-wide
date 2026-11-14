@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="sw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#071827">
+  <title>KEM VPN — Jaribio la Hotspot</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#071827;color:#edf5fb;font:16px system-ui,sans-serif}
+    main{max-width:680px;margin:0 auto;padding:24px 16px}.card{background:#10283b;border:1px solid #24445d;border-radius:16px;padding:18px;margin:14px 0}
+    h1{font-size:28px;margin:8px 0}h2{font-size:19px;margin:0 0 8px}.muted{color:#a9bdcc;line-height:1.55}
+    button{background:#22c58b;color:#062319;border:0;border-radius:10px;padding:13px 18px;font-weight:700;font-size:16px}
+    .status{font-weight:700;margin-top:12px}.ok{color:#55e0a7}.bad{color:#ff9d9d}.wait{color:#ffd479}
+    ol{padding-left:22px;line-height:1.7}.pill{display:inline-block;padding:5px 9px;border-radius:20px;background:#183b52;color:#b9d9eb;font-size:12px}
+  </style>
+</head>
+<body>
+<main>
+  <span class="pill">KEM VPN · TEST MODE</span>
+  <h1>Jaribio la Hotspot</h1>
+  <p class="muted">Ukurasa huu unajaribu kama simu imeunganishwa kwenye intaneti na kama inaweza kufikia API ya KEM VPN. HAUUNDI VPN tunnel wala kuthibitisha WireGuard.</p>
+  <section class="card">
+    <h2>Hali ya intaneti ya simu hii</h2>
+    <div id="network" class="status wait">Inakagua...</div>
+    <h2 style="margin-top:18px">Hali ya API ya KEM VPN</h2>
+    <div id="api" class="status wait">Inasubiri jaribio...</div>
+    <p id="details" class="muted" aria-live="polite">Bonyeza kitufe kuanza jaribio.</p>
+    <button id="check" type="button">Jaribu tena</button>
+  </section>
+  <section class="card">
+    <h2>Jinsi ya kujaribu kwa simu mbili</h2>
+    <ol>
+      <li>Washa Mobile Data kwenye simu ya kwanza.</li>
+      <li>Washa Personal Hotspot kwenye simu hiyo.</li>
+      <li>Unganisha simu ya pili kwenye WiFi ya hotspot.</li>
+      <li>Fungua anwani hii hii kwenye simu ya pili, kisha bonyeza “Jaribu tena”.</li>
+      <li>Ikiwa intaneti na API vinafikiwa, hatua ya majaribio ya akaunti/dashboard inaweza kuendelea.</li>
+    </ol>
+    <p class="muted">Kama API bado haijawekwa kwenye server ya umma, jaribio la API litaonyesha halijafikiwa hata kama hotspot ina intaneti.</p>
+  </section>
+  <section class="card">
+    <h2>Kinachohitajika kwa mtu aliye mbali</h2>
+    <p class="muted">Hotspot ya simu haiwezi kufikiwa moja kwa moja na mtu aliye mbali. Muunganisho wa WireGuard wa mbali unahitaji VPS au server yenye anwani inayofikika, kisha peer za WireGuard zisanidiwe. Usitume password, private key au QR yenye siri kwa mtu mwingine.</p>
+  </section>
+</main>
+<script>
+'use strict';
+const network=document.getElementById('network');
+const api=document.getElementById('api');
+const details=document.getElementById('details');
+const button=document.getElementById('check');
+function set(el,text,kind){el.textContent=text;el.className='status '+kind;}
+async function runCheck(){
+  button.disabled=true;
+  set(network,navigator.onLine?'Kifaa kinaonyesha kiko online':'Kifaa kinaonyesha hakina intaneti',navigator.onLine?'ok':'bad');
+  set(api,'Inajaribu kufikia API...','wait');
+  details.textContent='Subiri kidogo...';
+  try{
+    const response=await fetch('/health',{cache:'no-store',headers:{Accept:'application/json'}});
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const data=await response.json();
+    if(!data.ok)throw new Error('API haijarudisha hali ya OK');
+    set(api,'API ya KEM VPN inapatikana','ok');
+    details.textContent='Huduma: '+(data.service||'KEM VPN')+'. Jaribio hili linathibitisha ufikivu wa API tu, si muunganisho wa WireGuard.';
+  }catch(error){
+    set(api,'API haijafikiwa','bad');
+    details.textContent='Sababu: '+error.message+'. Hakikisha API imewekwa kwenye server na anwani hii inafunguka kupitia intaneti.';
+  }finally{button.disabled=false;}
+}
+button.addEventListener('click',runCheck);
+window.addEventListener('online',()=>set(network,'Kifaa kinaonyesha kiko online','ok'));
+window.addEventListener('offline',()=>set(network,'Kifaa kinaonyesha hakina intaneti','bad'));
+runCheck();
+</script>
+</body>
+</html>
