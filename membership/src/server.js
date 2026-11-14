@@ -94,6 +94,13 @@ db.exec(`
     updated_at TEXT NOT NULL
   );
 `);
+db.exec(`
+  CREATE TABLE IF NOT EXISTS admin_sessions (
+    token_hash TEXT PRIMARY KEY,
+    expires_at INTEGER NOT NULL,
+    revoked_at TEXT
+  );
+`);
 function readSetting(key, fallback) {
   const row = db.prepare('SELECT setting_value FROM app_settings WHERE setting_key = ?').get(key);
   if (!row) return fallback;
@@ -179,8 +186,11 @@ function adminOnly(req, res, next) {
   const expected = Buffer.from(ADMIN_API_KEY);
   const supplied = Buffer.from(legacyKey);
   const keyOk = supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
-  const bearer = String(req.headers.authorization || '').replace(/^Bearer\\s+/i, '');
-  if (!keyOk && !verifyAdminToken(bearer)) return res.status(403).json({ error: 'Admin access denied or session expired' });
+  const bearer = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  const tokenHash = crypto.createHash('sha256').update(bearer).digest('hex');
+  const session = bearer && db.prepare('SELECT expires_at, revoked_at FROM admin_sessions WHERE token_hash = ?').get(tokenHash);
+  const sessionOk = verifyAdminToken(bearer) && session && !session.revoked_at && session.expires_at > Date.now();
+  if (!keyOk && !sessionOk) return res.status(403).json({ error: 'Admin access denied or session expired' });
   next();
 }
 function addDuration(date, duration) {
@@ -357,9 +367,12 @@ app.post('/api/login', authAttemptLimiter, (req, res) => {
 app.post('/api/admin/login', authAttemptLimiter, (req, res) => {
   const configuredHash = process.env.ADMIN_PIN_HASH || '';
   const pin = String(req.body.pin || '');
-  if (!configuredHash || !/^\\d{6}$/.test(pin)) return res.status(503).json({ error: 'Admin PIN is not configured on the server.' });
+  if (!configuredHash || !/^\d{6}$/.test(pin)) return res.status(503).json({ error: 'Admin PIN is not configured on the server.' });
   if (!verifyPassword(pin, configuredHash)) return res.status(401).json({ error: 'Admin PIN is incorrect.' });
-  res.json({ token: makeAdminToken(), expiresInSeconds: 1800 });
+  const token = makeAdminToken();
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  db.prepare('INSERT INTO admin_sessions(token_hash, expires_at) VALUES(?, ?)').run(tokenHash, Date.now() + 30 * 60 * 1000);
+  res.json({ token, expiresInSeconds: 1800 });
 });
 
 app.get('/api/me', auth, (req, res) => {
