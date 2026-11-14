@@ -1,7 +1,9 @@
 'use strict';
-const $=id=>document.getElementById(id);let mode='login',token=localStorage.getItem('kem_customer_token')||'';
+const $=id=>document.getElementById(id);
+const API_BASE=((window.KemConfig&&window.KemConfig.apiBaseUrl())||localStorage.getItem('kem_api_base_url')||'').replace(/\/+$/,'');
+let mode='login',token=localStorage.getItem('kem_customer_token')||'';
 const money=n=>new Intl.NumberFormat('sw-TZ').format(Number(n||0))+' TZS';
-async function api(url,opts={}){const r=await fetch(url,{...opts,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opts.headers||{})}});const d=await r.json().catch(()=>({error:'Jibu la seva halieleweki.'}));if(!r.ok)throw Error(d.error||'Ombi halijafanikiwa.');return d;}
+async function api(url,opts={}){if(!API_BASE)throw Error('API ya KEM VPN haijaunganishwa. Fungua Mipangilio ya Seva kwenye programu uweke HTTPS URL ya backend.');const r=await fetch(API_BASE+url,{...opts,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opts.headers||{})}});const d=await r.json().catch(()=>({error:'Jibu la seva halieleweki.'}));if(!r.ok)throw Error(d.error||'Ombi halijafanikiwa.');return d;}
 function modeSet(v){mode=v;$('login-tab').classList.toggle('active',v==='login');$('register-tab').classList.toggle('active',v==='register');$('auth-submit').textContent=v==='login'?'Ingia kwenye akaunti':'Tengeneza akaunti';$('password').autocomplete=v==='login'?'current-password':'new-password';$('auth-message').textContent='';}
 $('login-tab').onclick=()=>modeSet('login');$('register-tab').onclick=()=>modeSet('register');
 $('auth-form').onsubmit=async e=>{e.preventDefault();$('auth-submit').disabled=true;$('auth-message').textContent='Inachakata...';try{const d=await api('/api/'+(mode==='login'?'login':'register'),{method:'POST',body:JSON.stringify({phone:$('phone').value,password:$('password').value})});token=d.token;localStorage.setItem('kem_customer_token',token);await dashboard();}catch(err){$('auth-message').textContent=err.message;}finally{$('auth-submit').disabled=false;}};
