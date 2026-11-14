@@ -196,3 +196,10 @@ After an order is confirmed as paid (either by a verified ClickPesa payment-stat
 - `POST /api/access-codes/verify` — authenticated JSON: `{ "code": "KEM-XXXXXXXXXXXX" }`; returns valid only when the code belongs to the logged-in user and its subscription has not expired or been revoked.
 
 Codes are generated using cryptographic randomness, stored encrypted at rest (AES-256-GCM) with a SHA-256 lookup hash, and never exposed to other customers. Keep `TOKEN_SECRET` private and stable: changing it will prevent decrypting previously issued codes. This code layer does not itself provision or enforce a WireGuard peer; VPN server integration is still required before the code can grant network access.
+
+
+## Customer web dashboard
+
+The customer dashboard is served from the membership service root URL (for example, `https://your-domain/`). It provides phone/password registration and login, current subscription status, configured plans and prices, payment instructions, order history, and access-code display. The page calls the existing authenticated endpoints: `/api/register`, `/api/login`, `/api/me`, `/api/plans`, `/api/payment-settings`, `/api/orders`, and `/api/access-codes`.
+
+The customer page is a web dashboard, not an Android APK. Automatic checkout remains unavailable until ClickPesa merchant credentials, checksum configuration as required by the merchant, and a public HTTPS `PUBLIC_BASE_URL` are configured. Prices currently marked as draft must be reviewed by the administrator before taking payments. Access codes are issued only after a payment is verified and activated. The dashboard does not yet configure WireGuard peers or establish a VPN tunnel; a provisioned VPN server and peer-management integration are still required.
