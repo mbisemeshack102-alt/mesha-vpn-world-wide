@@ -113,7 +113,10 @@ $('load-qr-scans').addEventListener('click', async () => {
     for (const scan of data.scans) {
       const row = document.createElement('p');
       row.textContent = scan.plan_id + ' · ' + scan.duration + ' · ' + new Date(scan.scanned_at).toLocaleString('sw-TZ') + ' · QR #' + scan.qr_id;
-      host.append(row);
+      const revoke = document.createElement('button');
+      revoke.type = 'button'; revoke.textContent = 'Zuia QR';
+      revoke.addEventListener('click', async () => { try { await request('/api/admin/qr/' + scan.qr_id + '/revoke', {method:'POST'}); revoke.disabled = true; revoke.textContent = 'Imefungwa'; } catch (error) { $('status').textContent = error.message; } });
+      row.append(revoke); host.append(row);
     }
   } catch (error) { $('status').textContent = error.message; }
 });
