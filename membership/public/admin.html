@@ -38,6 +38,17 @@
 <h2>Udhibiti wa QR Code</h2><p class="muted">Weka idadi ya juu ya mara QR moja inaweza kuscan. Unaweza pia kuangalia historia na kuzuia QR iliyotumika.</p><label for="qr-max-scans">Kikomo cha scans kwa QR (1–1000)</label><input id="qr-max-scans" type="number" min="1" max="1000" value="3"><button id="load-qr-scans" type="button">Angalia historia ya QR scans</button><div id="qr-scan-history" class="muted"></div>
 </section>
 <section class="panel">
+<h2>Usimamizi wa WiFi / Hotspot</h2>
+<p class="muted">Andaa aina ya router na taarifa za mtandao. Hii ni hatua ya maandalizi tu: haitabadilisha router wala kuunganisha wateja mpaka router API na seva ziunganishwe kwenye mtandao wa ndani.</p>
+<label for="wifi-router">Aina ya router</label>
+<select id="wifi-router"><option value="none">Bado sijachagua</option><option value="mikrotik">MikroTik</option><option value="tplink">TP-Link</option><option value="tenda">Tenda</option><option value="huawei">Huawei</option><option value="openwrt">OpenWrt</option><option value="other">Nyingine</option></select>
+<label for="wifi-ssid">Jina la WiFi (SSID)</label><input id="wifi-ssid" maxlength="32" placeholder="Mfano: KEM WiFi">
+<label for="wifi-host">Anwani ya router/controller (LAN IP au hostname)</label><input id="wifi-host" maxlength="253" placeholder="Mfano: 192.168.88.1">
+<label><input id="wifi-enabled" type="checkbox"> Iweke tayari kwa kuunganishwa na KEM VPN baadaye</label>
+<button id="wifi-status" type="button">Angalia hali ya muunganisho</button><p id="wifi-status-result" class="muted" role="status"></p>
+<p class="muted">Usiweke password ya router hapa kwa sasa. Tutaiunganisha kwa njia salama kupitia siri za seva, si ndani ya browser au APK.</p>
+</section>
+<section class="panel">
 <h2>Vifurushi na bei</h2><p class="muted">Unaweza kuongeza vifurushi vingi kadiri unavyohitaji (kiwango cha juu 100). Bei ni TZS; data ni GB. Wateja wataona vifurushi vilivyohifadhiwa hapa.</p>
 <button id="add-plan" type="button">+ Ongeza kifurushi kipya</button>
 <textarea id="plans" spellcheck="false"></textarea>
