@@ -383,6 +383,7 @@ app.put('/api/admin/settings', adminOnly, (req, res) => {
   res.json({ ok: true, message: 'Settings saved.' });
 });
 app.use('/admin', express.static(path.join(__dirname, '../public'), { index: 'admin.html' }));
+app.use(express.static(path.join(__dirname, '../public'), { index: 'index.html' }));
 
 app.post('/api/register', authAttemptLimiter, (req, res) => {
   const phone = normalizePhone(req.body.phone);
