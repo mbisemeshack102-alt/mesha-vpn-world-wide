@@ -213,3 +213,18 @@ The customer page is a web dashboard, not an Android APK. Automatic checkout rem
 - Admin settings include `qr.maxScans` (1–1000, default 3). Admin scan history is available at `GET /api/admin/qr-scans`; an admin can revoke a QR with `POST /api/admin/qr/:id/revoke`.
 - QR scanning verifies membership only. It does not configure or connect WireGuard; VPN connection provisioning requires a deployed VPS and WireGuard peer-management backend.
 - Install dependencies from this directory with `npm install`; the QR renderer uses the `qrcode` package.
+
+## WiFi / Hotspot management foundation (prepared)
+
+The admin dashboard includes initial WiFi controller settings for MikroTik, TP-Link, Tenda, Huawei, OpenWrt or another router, plus an SSID label and LAN management host. The protected `GET /api/admin/wifi/status` endpoint deliberately reports `connectionState: not_connected`, `integrationReady: false`, and unknown client counts until a real router/controller adapter is installed and tested.
+
+**Important limitations:** these settings do not yet connect to a router, create hotspot users/vouchers, disconnect devices, enforce speed/data quotas, or report live clients. Router credentials are intentionally not collected in the browser. A secure server-side adapter must be implemented for the chosen router and reachable from the KEM VPN server on the same LAN/VPN management network. The router must support an appropriate API/controller interface. The actual integration and live testing require the router model, LAN topology, admin-created restricted API account, and network access. Do not expose router management ports directly to the public internet.
+
+Planned adapter capabilities after router selection and secure setup:
+- Read connected clients and traffic counters.
+- Create/expire hotspot vouchers from paid KEM packages.
+- Apply speed and data limits supported by the router.
+- Suspend/re-enable client sessions and record admin actions.
+- Keep WiFi hotspot and WireGuard VPN entitlements separate but manageable in one admin dashboard.
+
+No router is currently connected by this scaffold; it is configuration preparation only.
