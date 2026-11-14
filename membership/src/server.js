@@ -7,6 +7,7 @@ const Database = require('better-sqlite3');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const QRCode = require('qrcode');
 
 const app = express();
 app.disable('x-powered-by');
@@ -77,6 +78,20 @@ db.exec(`
     revoked_at TEXT
   );
   CREATE INDEX IF NOT EXISTS idx_access_codes_user_expiry ON access_codes(user_id, expires_at);
+  CREATE TABLE IF NOT EXISTS qr_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    access_code_id INTEGER NOT NULL UNIQUE REFERENCES access_codes(id),
+    token_hash TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL,
+    revoked_at TEXT
+  );
+  CREATE TABLE IF NOT EXISTS qr_scans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    qr_token_id INTEGER NOT NULL REFERENCES qr_tokens(id),
+    scanned_at TEXT NOT NULL,
+    ip_hash TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_qr_scans_token ON qr_scans(qr_token_id, scanned_at);
 `);
 
 const orderColumns = db.prepare('PRAGMA table_info(orders)').all().map(column => column.name);
@@ -339,7 +354,7 @@ app.get('/api/admin/settings', adminOnly, (_req, res) => {
 app.put('/api/admin/settings', adminOnly, (req, res) => {
   const body = req.body || {};
   const payment = body.payment;
-  const plans = body.plans;
+  const plans = body.plans;\n  const qr = body.qr || { maxScans: 3 };\n  const maxScans = Number(qr.maxScans);\n  if (!Number.isInteger(maxScans) || maxScans < 1 || maxScans > 1000) return res.status(400).json({ error: 'Kikomo cha QR scans kiwe kati ya 1 na 1000.' });
   const allowedMethods = new Set(['airtel_money','mpesa','mixx_by_yas','halopesa','bank','visa','mastercard']);
   if (!payment || typeof payment !== 'object' || !plans || typeof plans !== 'object') {
     return res.status(400).json({ error: 'Payment and plans settings are required.' });
@@ -489,6 +504,87 @@ app.post('/api/payments/clickpesa/webhook', async (req, res) => {
     console.error('ClickPesa webhook verification failed:', error.message);
     res.status(400).json({ error: 'Payment notification could not be verified.' });
   }
+});
+
+
+const qrScanLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: 'draft-7',
+  legacyHeaders: false, message: 'Scan nyingi sana. Jaribu tena baada ya dakika 15.'
+});
+function qrScanLimit() {
+  const setting = readSetting('qr', { maxScans: 3 });
+  return Number.isInteger(Number(setting.maxScans)) ? Number(setting.maxScans) : 3;
+}
+function hashQrToken(token) {
+  return crypto.createHash('sha256').update(String(token)).digest('hex');
+}
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+app.get('/api/qr-codes', auth, async (req, res) => {
+  try {
+    const rows = db.prepare(`SELECT ac.id AS access_code_id, ac.expires_at, ac.revoked_at, o.plan_id, o.duration
+      FROM access_codes ac JOIN orders o ON o.id=ac.order_id
+      WHERE ac.user_id=? AND ac.revoked_at IS NULL AND ac.expires_at>?
+      ORDER BY ac.created_at DESC`).all(req.user.id, nowIso());
+    const baseUrl = process.env.PUBLIC_BASE_URL || (req.protocol + '://' + req.get('host'));
+    if (!baseUrl.startsWith('https://') && process.env.NODE_ENV === 'production') {
+      return res.status(503).json({ error: 'QR inahitaji anwani salama ya HTTPS kwenye PUBLIC_BASE_URL.' });
+    }
+    const result = [];
+    for (const row of rows) {
+      let qr = db.prepare('SELECT id, token_hash, revoked_at FROM qr_tokens WHERE access_code_id=?').get(row.access_code_id);
+      if (!qr) {
+        const token = crypto.randomBytes(32).toString('base64url');
+        const info = db.prepare('INSERT INTO qr_tokens(access_code_id,token_hash,created_at) VALUES(?,?,?)')
+          .run(row.access_code_id, hashQrToken(token), nowIso());
+        qr = { id: Number(info.lastInsertRowid), token_hash: hashQrToken(token), revoked_at: null };
+      }
+      if (qr.revoked_at) continue;
+      const tokenRow = db.prepare('SELECT token_hash FROM qr_tokens WHERE id=?').get(qr.id);
+      const token = tokenRow.token_hash; // token is never recoverable from its hash; issue a fresh one below when needed.
+      const secret = crypto.randomBytes(32).toString('base64url');
+      db.prepare('UPDATE qr_tokens SET token_hash=? WHERE id=?').run(hashQrToken(secret), qr.id);
+      const url = baseUrl.replace(/\/$/, '') + '/verify/qr/' + encodeURIComponent(secret);
+      const scanCount = db.prepare('SELECT COUNT(*) AS count FROM qr_scans WHERE qr_token_id=?').get(qr.id).count;
+      result.push({ planId: row.plan_id, duration: row.duration, expiresAt: row.expires_at, qrDataUrl: await QRCode.toDataURL(url, { width: 260, margin: 1 }), scans: scanCount, maxScans: qrScanLimit() });
+    }
+    res.json({ qrCodes: result });
+  } catch (error) {
+    console.error('QR generation failed:', error.message);
+    res.status(500).json({ error: 'Imeshindikana kutengeneza QR. Jaribu tena.' });
+  }
+});
+app.get('/verify/qr/:token', qrScanLimiter, (req, res) => {
+  const token = String(req.params.token || '');
+  if (token.length < 30 || token.length > 100) return res.status(400).send('QR code si sahihi.');
+  const qr = db.prepare(`SELECT qt.id AS qr_id, qt.revoked_at AS qr_revoked, ac.revoked_at AS code_revoked,
+      ac.expires_at, o.plan_id, o.duration, s.status AS subscription_status
+    FROM qr_tokens qt JOIN access_codes ac ON ac.id=qt.access_code_id
+    JOIN orders o ON o.id=ac.order_id
+    JOIN subscriptions s ON s.user_id=ac.user_id AND s.expires_at=ac.expires_at
+    WHERE qt.token_hash=? ORDER BY s.id DESC LIMIT 1`).get(hashQrToken(token));
+  const invalid = !qr || qr.qr_revoked || qr.code_revoked || qr.expires_at <= nowIso() || qr.subscription_status !== 'active';
+  if (invalid) return res.status(403).send('<!doctype html><meta charset="utf-8"><title>KEM VPN</title><h2>QR si halali au muda wake umeisha</h2>');
+  const count = db.prepare('SELECT COUNT(*) AS count FROM qr_scans WHERE qr_token_id=?').get(qr.qr_id).count;
+  if (count >= qrScanLimit()) return res.status(429).send('<!doctype html><meta charset="utf-8"><title>KEM VPN</title><h2>Kikomo cha kuscan QR kimefikiwa</h2><p>Wasiliana na msimamizi.</p>');
+  const ipHash = crypto.createHash('sha256').update(String(req.ip) + TOKEN_SECRET).digest('hex');
+  db.prepare('INSERT INTO qr_scans(qr_token_id,scanned_at,ip_hash) VALUES(?,?,?)').run(qr.qr_id, nowIso(), ipHash);
+  res.type('html').send('<!doctype html><html lang="sw"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KEM VPN · Uthibitisho</title><body style="font:16px system-ui;background:#071827;color:#edf6fb;padding:28px"><h1 style="color:#46d6d0">KEM VPN</h1><h2>Uanachama umethibitishwa</h2><p>Kifurushi: ' + escapeHtml(qr.plan_id) + '</p><p>Muda: ' + escapeHtml(qr.duration) + '</p><p>Inaisha: ' + escapeHtml(new Date(qr.expires_at).toLocaleString('sw-TZ')) + '</p><p>QR hii imetumika ' + (count + 1) + ' / ' + qrScanLimit() + ' mara.</p><p>Uthibitisho huu si muunganisho wa WireGuard. Muunganisho utawezeshwa baada ya seva ya VPN kusanidiwa.</p></body></html>');
+});
+app.get('/api/admin/qr-scans', adminOnly, (_req, res) => {
+  const scans = db.prepare(`SELECT qs.id, qs.scanned_at, qt.id AS qr_id, o.plan_id, o.duration, ac.expires_at
+    FROM qr_scans qs JOIN qr_tokens qt ON qt.id=qs.qr_token_id
+    JOIN access_codes ac ON ac.id=qt.access_code_id JOIN orders o ON o.id=ac.order_id
+    ORDER BY qs.scanned_at DESC LIMIT 100`).all();
+  res.json({ scans, maxScans: qrScanLimit() });
+});
+app.post('/api/admin/qr/:id/revoke', adminOnly, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'QR ID si sahihi.' });
+  const result = db.prepare('UPDATE qr_tokens SET revoked_at=? WHERE id=? AND revoked_at IS NULL').run(nowIso(), id);
+  if (!result.changes) return res.status(404).json({ error: 'QR haipo au tayari imezuiwa.' });
+  res.json({ ok: true, message: 'QR imezuiwa.' });
 });
 
 app.get('/api/access-codes', auth, (req, res) => {
