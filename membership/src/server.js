@@ -362,7 +362,7 @@ app.put('/api/admin/settings', adminOnly, (req, res) => {
   const qr = body.qr || { maxScans: 3 };
   const wifi = body.wifi || readSetting('wifi', { routerType: 'none', ssidLabel: '', managementHost: '', enabled: false });
   const maxScans = Number(qr.maxScans);
-  const allowedRouters = new Set(['none','mikrotik','tplink','tenda','huawei','openwrt','other']);
+  const allowedRouters = new Set(['none','mikrotik','tplink','tenda','huawei','zte','airtel','vodacom','yas','openwrt','other']);
   const routerType = String(wifi.routerType || 'none').toLowerCase();
   const ssidLabel = String(wifi.ssidLabel || '').trim();
   const managementHost = String(wifi.managementHost || '').trim();
@@ -419,7 +419,10 @@ app.put('/api/admin/settings', adminOnly, (req, res) => {
   });
   writeSetting('plans', cleanPlans);
   writeSetting('qr', { maxScans });
-  writeSetting('wifi', { routerType, ssidLabel, managementHost, enabled: Boolean(wifi.enabled) });
+  const provider = String(wifi.provider || 'none').toLowerCase();
+  const routerModel = String(wifi.routerModel || '').trim();
+  if (!new Set(['none','airtel','vodacom','yas','tplink','other']).has(provider) || routerModel.length > 100) return res.status(400).json({ error: 'Mtoa huduma au modeli ya router si sahihi.' });
+  writeSetting('wifi', { routerType, provider, routerModel, ssidLabel, managementHost, enabled: Boolean(wifi.enabled) });
   res.json({ ok: true, message: 'Settings saved.' });
 });
 app.get('/api/admin/wifi/status', adminOnly, (_req, res) => {
@@ -427,6 +430,7 @@ app.get('/api/admin/wifi/status', adminOnly, (_req, res) => {
   res.json({
     configured: config.routerType !== 'none' && Boolean(config.managementHost),
     routerType: config.routerType, ssidLabel: config.ssidLabel, managementHost: config.managementHost,
+    provider: config.provider || 'none', routerModel: config.routerModel || '',
     enabledForFutureIntegration: Boolean(config.enabled), connectionState: 'not_connected',
     connectedClients: null, integrationReady: false,
     message: 'Router API credentials na muunganisho wa LAN bado havijawekwa. Hakuna wateja au vifaa vinavyodhibitiwa kwa sasa.'
