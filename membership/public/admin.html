@@ -2,11 +2,11 @@
 <html lang="sw">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0b1424"><title>KEM PRO WIFI Admin</title>
+<meta name="theme-color" content="#0b1424"><title>Wi-Fi Manager Admin</title>
 <link rel="stylesheet" href="admin.css">
 </head>
 <body><main>
-<header class="brand-header"><img src="/kem-vpn-logo.svg" alt="KEM PRO WIFI logo" style="display:block;width:min(190px,55vw);height:auto;margin:0 auto 16px"><h1>KEM PRO WIFI · ADMIN</h1><p>Admin Dashboard · Usimamizi wa Wi-Fi, vifurushi, malipo na VPN</p></header>
+<header class="brand-header"><img src="/kem-vpn-logo.svg" alt="Wi-Fi Package Manager logo" style="display:block;width:min(190px,55vw);height:auto;margin:0 auto 16px"><h1>WI-FI PACKAGE MANAGER · ADMIN</h1><p>Admin Dashboard · Usimamizi wa router, vifurushi, wateja na malipo</p></header>
 <section class="panel" id="admin-lock">
 <h2>Uthibitisho wa mmiliki</h2>
 <label for="pin">PIN ya siri ya mmiliki (tarakimu 6)</label>
@@ -47,13 +47,11 @@
 <select id="wifi-router"><option value="none">Bado sijachagua</option><option value="mikrotik">MikroTik</option><option value="tplink">TP-Link</option><option value="tenda">Tenda</option><option value="huawei">Huawei</option><option value="openwrt">OpenWrt</option><option value="other">Nyingine</option></select>
 <label for="wifi-ssid">Jina la WiFi (SSID)</label><input id="wifi-ssid" maxlength="32" placeholder="Mfano: KEM WiFi">
 <label for="wifi-host">Anwani ya router/controller (LAN IP au hostname)</label><input id="wifi-host" maxlength="253" placeholder="Mfano: 192.168.88.1">
-<label><input id="wifi-enabled" type="checkbox"> Iweke tayari kwa kuunganishwa na KEM PRO WIFI baadaye</label>
+<label><input id="wifi-enabled" type="checkbox"> Iweke tayari kwa kuunganishwa na Wi-Fi Manager baadaye</label>
 <button id="wifi-status" type="button">Angalia hali ya muunganisho</button><p id="wifi-status-result" class="muted" role="status"></p>
 <p class="muted">Usiweke password ya router hapa kwa sasa. Tutaiunganisha kwa njia salama kupitia siri za seva, si ndani ya browser au APK.</p>
 </section>
-<section class="panel">
-<h2>WireGuard Server</h2><p class="muted">Hali ya interface ya VPN kwenye VPS na urejeshaji wa peer baada ya usanidi.</p><button id="wg-status" type="button">Kagua WireGuard</button><p id="wg-status-result" class="muted" role="status"></p><label for="wg-order-id">Order ID iliyolipiwa</label><input id="wg-order-id" maxlength="64" placeholder="KEM..."><button id="wg-retry" type="button">Jaribu kutengeneza VPN peer</button><p class="muted">Tumia baada ya kusanidi WireGuard kwenye VPS; order lazima iwe imelipiwa.</p>
-</section>
+
 <section class="panel">
 <h2>Vifurushi na bei</h2><p class="muted">Unaweza kuongeza vifurushi vingi kadiri unavyohitaji (kiwango cha juu 100). Bei ni TZS; data ni GB. Wateja wataona vifurushi vilivyohifadhiwa hapa.</p>
 <button id="add-plan" type="button">+ Ongeza kifurushi kipya</button>
@@ -64,7 +62,7 @@
 <button id="reload" type="button">Pakia upya mipangilio</button>
 <button id="lock" type="button">Funga Admin / Toka</button>
 </section>
-<p class="danger">Tahadhari: Dashboard husanidi taarifa tu. Malipo ya moja kwa moja na uanzishaji wa WireGuard vinahitaji huduma husika kusanidiwa na kuthibitishwa.</p>
+<p class="danger">Tahadhari: Dashboard husanidi taarifa tu. Malipo ya moja kwa moja na udhibiti halisi wa router vinahitaji huduma husika kusanidiwa na kuthibitishwa.</p>
 </div>
 </main>
 <script src="admin.js" defer></script></body></html>
