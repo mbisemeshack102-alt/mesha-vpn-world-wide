@@ -258,7 +258,7 @@ The API now includes a server-side WireGuard adapter in `src/wireguard.js`:
 - After a verified ClickPesa payment or an admin-confirmed payment, it attempts to create a unique WireGuard peer on the configured server interface.
 - Client private keys are encrypted at rest using the existing `TOKEN_SECRET`; public keys and assigned IPv4 addresses are stored in SQLite.
 - Authenticated customers can request `GET /api/wireguard/config`, which returns a WireGuard configuration and QR data URL for import into the WireGuard app.
-- Admins can inspect `GET /api/admin/wireguard/status`.
+- Admins can inspect `GET /api/admin/wireguard/status` and retry a paid order with `POST /api/admin/wireguard/orders/:id/provision`.
 - Expired peers are removed from the live interface when the API checks subscriptions.
 
 ### VPS prerequisites before enabling this integration
