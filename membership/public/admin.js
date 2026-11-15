@@ -145,13 +145,3 @@ $('wifi-status').addEventListener('click', async () => {
   } catch (error) { $('wifi-status-result').textContent = error.message; }
 });
 
-$('wg-status').addEventListener('click', async () => {
-  try { const data = await request('/api/admin/wireguard/status'); $('wg-status-result').textContent = data.configured && data.interfaceResponding ? 'WireGuard iko tayari kwenye ' + data.interface + '. Peers: ' + data.activePeers : 'Bado haijawa tayari: ' + (data.message || 'interface haijibu.'); }
-  catch (error) { $('wg-status-result').textContent = error.message; }
-});
-$('wg-retry').addEventListener('click', async () => {
-  const id = $('wg-order-id').value.trim();
-  if (!id) { $('wg-status-result').textContent = 'Weka Order ID kwanza.'; return; }
-  try { const data = await request('/api/admin/wireguard/orders/' + encodeURIComponent(id) + '/provision', {method:'POST'}); $('wg-status-result').textContent = 'Peer imetengenezwa: ' + data.clientAddress; }
-  catch (error) { $('wg-status-result').textContent = error.message; }
-});
