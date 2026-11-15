@@ -39,6 +39,13 @@ const authAttemptLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many attempts. Try again in 15 minutes.' }
 });
+const connectorHeartbeatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 120,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Connector heartbeat rate limit exceeded.' }
+});
 const adminLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
@@ -664,7 +671,7 @@ app.post('/api/site-connectors/enroll', authAttemptLimiter, (req, res) => {
   res.status(201).json({ connectorId: enrolled.connectorId, token: enrolled.token,
     warning: 'Hifadhi token hii ndani ya connector tu. Haitarudishwa tena.' });
 });
-app.post('/api/site-connectors/heartbeat', authAttemptLimiter, (req, res) => {
+app.post('/api/site-connectors/heartbeat', connectorHeartbeatLimiter, (req, res) => {
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   const connector = SiteConnectorAuth.authenticateConnector(db, token);
   if (!connector) return res.status(401).json({ error: 'Connector token si sahihi au imezuiwa.' });
