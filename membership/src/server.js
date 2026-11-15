@@ -371,7 +371,7 @@ app.use('/api/admin', (_req, res, next) => {
   res.setHeader('Pragma', 'no-cache');
   next();
 });
-app.get('/health', (_req, res) => res.json({ ok: true, service: 'KEM VPN Membership API' }));
+app.get('/health', (_req, res) => res.json({ ok: true, service: 'Wi-Fi Package Manager API' }));
 app.get('/api/plans', (_req, res) => {
   const plans = currentPlans();
   const result = Object.entries(plans).map(([id, p]) => ({
@@ -728,4 +728,4 @@ if (process.env.WIREGUARD_INTERFACE) {
   syncExpiredPeers();
   setInterval(syncExpiredPeers, 60 * 1000).unref();
 }
-app.listen(PORT, '0.0.0.0', () => console.log('KEM VPN Membership API listening on port ' + PORT));
+app.listen(PORT, '0.0.0.0', () => console.log('Wi-Fi Package Manager API listening on port ' + PORT));
