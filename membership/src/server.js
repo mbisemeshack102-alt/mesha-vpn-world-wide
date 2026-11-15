@@ -715,4 +715,9 @@ app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: 'Internal server error' });
 });
+if (process.env.WIREGUARD_INTERFACE) {
+  const syncExpiredPeers = () => { try { revokeExpiredWireGuardPeers(); } catch (error) { console.error('WireGuard expiry sync failed:', error.message); } };
+  syncExpiredPeers();
+  setInterval(syncExpiredPeers, 60 * 1000).unref();
+}
 app.listen(PORT, '0.0.0.0', () => console.log('KEM VPN Membership API listening on port ' + PORT));
