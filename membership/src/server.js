@@ -665,7 +665,7 @@ app.post('/api/site-connectors/enroll', authAttemptLimiter, (req, res) => {
     warning: 'Hifadhi token hii ndani ya connector tu. Haitarudishwa tena.' });
 });
 app.post('/api/site-connectors/heartbeat', authAttemptLimiter, (req, res) => {
-  const token = String(req.headers.authorization || '').replace(/^Bearer\\s+/i, '');
+  const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   const connector = SiteConnectorAuth.authenticateConnector(db, token);
   if (!connector) return res.status(401).json({ error: 'Connector token si sahihi au imezuiwa.' });
   res.json({ ok: true, connectorId: connector.id, serverTime: nowIso(), commands: [] });
