@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 let API_BASE=((window.KemConfig&&window.KemConfig.apiBaseUrl())||localStorage.getItem('kem_api_base_url')||'').replace(/\/+$/,'');
 let mode='login',token=localStorage.getItem('kem_customer_token')||'';
 const money=n=>new Intl.NumberFormat('sw-TZ').format(Number(n||0))+' TZS';
-async function api(url,opts={}){if(!API_BASE)throw Error('API haijaunganishwa. Fungua Mipangilio ya Seva na uweke HTTPS URL ya backend.');const r=await fetch(API_BASE+url,{...opts,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opts.headers||{})}});const d=await r.json().catch(()=>({error:'Jibu la seva halieleweki.'}));if(!r.ok)throw Error(d.error||'Ombi halijafanikiwa.');return d;}
+async function api(url,opts={}){if(!API_BASE)throw Error('API haijaunganishwa. Fungua Mipangilio ya Seva ya KEM PRO WIFI na uweke HTTPS URL ya backend.');const r=await fetch(API_BASE+url,{...opts,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opts.headers||{})}});const d=await r.json().catch(()=>({error:'Jibu la seva halieleweki.'}));if(!r.ok)throw Error(d.error||'Ombi halijafanikiwa.');return d;}
 function setServerSummary(message){$('server-connection-summary').textContent=message;}
 function normalizeApiUrl(value){return String(value||'').trim().replace(/\/+$/,'');}
 $('server-settings-toggle').onclick=()=>{$('server-settings-panel').hidden=!$('server-settings-panel').hidden;if(API_BASE)$('server-api-url').value=API_BASE;};
