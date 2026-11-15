@@ -8,6 +8,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const QRCode = require('qrcode');
+const WireGuard = require('./wireguard');
 
 const app = express();
 app.disable('x-powered-by');
@@ -108,6 +109,8 @@ db.exec(`
     ip_hash TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_qr_scans_token ON qr_scans(qr_token_id, scanned_at);
+  CREATE TABLE IF NOT EXISTS wireguard_peers (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL REFERENCES users(id),subscription_id INTEGER NOT NULL REFERENCES subscriptions(id),order_id TEXT NOT NULL UNIQUE REFERENCES orders(id),public_key TEXT NOT NULL UNIQUE,private_key_ciphertext TEXT NOT NULL,client_address TEXT NOT NULL UNIQUE,created_at TEXT NOT NULL,revoked_at TEXT);
+  CREATE INDEX IF NOT EXISTS idx_wg_peer_user ON wireguard_peers(user_id, subscription_id);
 `);
 
 const qrColumns = db.prepare('PRAGMA table_info(qr_tokens)').all().map(column => column.name);
@@ -263,11 +266,17 @@ function addDuration(date, duration) {
   else result.setUTCDate(result.getUTCDate() + DURATIONS[duration]);
   return result;
 }
+function ensureWireGuardPeer(userId, orderId) { return WireGuard.provisionPeer(db, userId, orderId, sealAccessCode); }
+function revokeExpiredWireGuardPeers() {
+  const expired = db.prepare("SELECT p.* FROM wireguard_peers p JOIN subscriptions s ON s.id=p.subscription_id WHERE p.revoked_at IS NULL AND (s.status!='active' OR s.expires_at<=?)").all(nowIso());
+  for (const peer of expired) { try { WireGuard.removePeer(db, peer); } catch (error) { console.error('WireGuard expiry revoke failed:', error.message); } }
+}
 function currentSubscription(userId) {
   const sub = db.prepare(`SELECT * FROM subscriptions
     WHERE user_id = ? AND status = 'active' AND expires_at > ?
     ORDER BY expires_at DESC LIMIT 1`).get(userId, nowIso());
   db.prepare("UPDATE subscriptions SET status = 'expired' WHERE user_id = ? AND status = 'active' AND expires_at <= ?").run(userId, nowIso());
+  revokeExpiredWireGuardPeers();
   return sub || null;
 }
 
@@ -346,6 +355,7 @@ async function verifyAndActivateClickPesaOrder(orderReference, webhookData) {
   const reference = String(payment.paymentReference || '');
   if (!reference) throw new Error('ClickPesa did not return a payment reference.');
   activatePaidOrder(order, reference);
+  try { ensureWireGuardPeer(order.user_id, order.id); } catch (error) { console.error('WireGuard provisioning pending:', error.message); }
   return { alreadyPaid: false };
 }
 
@@ -638,6 +648,14 @@ app.post('/api/admin/qr/:id/revoke', adminOnly, (req, res) => {
   res.json({ ok: true, message: 'QR imezuiwa.' });
 });
 
+app.get('/api/wireguard/config', auth, async (req, res) => {
+  try { const result = await WireGuard.clientConfig(db, req.user.id, unsealAccessCode); if (!result) return res.status(404).json({ error: 'Hakuna WireGuard peer hai au subscription hai kwa sasa.' }); res.json(result); }
+  catch (error) { console.error('WireGuard config retrieval failed:', error.message); res.status(503).json({ error: 'WireGuard server haijasanidiwa kikamilifu.' }); }
+});
+app.get('/api/admin/wireguard/status', adminOnly, (_req, res) => {
+  try { const cfg = WireGuard.validateConfig(); const { execFileSync } = require('node:child_process'); const state = execFileSync('wg', ['show', cfg.iface], { encoding: 'utf8', timeout: 5000 }); res.json({ configured: true, interface: cfg.iface, endpoint: cfg.endpoint, activePeers: db.prepare('SELECT COUNT(*) AS count FROM wireguard_peers WHERE revoked_at IS NULL').get().count, interfaceResponding: Boolean(state) }); }
+  catch (error) { res.json({ configured: false, interfaceResponding: false, activePeers: db.prepare('SELECT COUNT(*) AS count FROM wireguard_peers WHERE revoked_at IS NULL').get().count, message: error.message }); }
+});
 app.get('/api/access-codes', auth, (req, res) => {
   const rows = db.prepare('SELECT ac.code_ciphertext, ac.expires_at, ac.created_at, o.plan_id, o.duration FROM access_codes ac JOIN orders o ON o.id = ac.order_id WHERE ac.user_id = ? AND ac.revoked_at IS NULL AND ac.expires_at > ? ORDER BY ac.created_at DESC').all(req.user.id, nowIso());
   const codes = rows.map(row => ({ code: unsealAccessCode(row.code_ciphertext), planId: row.plan_id, duration: row.duration, expiresAt: row.expires_at, createdAt: row.created_at }));
@@ -672,8 +690,10 @@ app.post('/api/admin/orders/:id/confirm', adminOnly, (req, res) => {
     if (String(e.code).startsWith('SQLITE_CONSTRAINT')) return res.status(409).json({ error: 'This payment reference or access code has already been used.' });
     throw e;
   }
+  let wireguard = { provisioned: false, message: 'WireGuard peer inasubiri usanidi wa VPS.' };
+  try { ensureWireGuardPeer(order.user_id, order.id); wireguard = { provisioned: true }; } catch (error) { console.error('Manual activation WireGuard provisioning pending:', error.message); }
   const subscription = db.prepare('SELECT expires_at FROM subscriptions WHERE user_id = ? ORDER BY id DESC LIMIT 1').get(order.user_id);
-  res.json({ ok: true, orderId: order.id, activatedUntil: subscription && subscription.expires_at });
+  res.json({ ok: true, orderId: order.id, activatedUntil: subscription && subscription.expires_at, wireguard });
 });
 
 app.use((err, _req, res, _next) => {
