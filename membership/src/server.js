@@ -656,6 +656,17 @@ app.get('/api/wireguard/config', auth, async (req, res) => {
   try { const result = await WireGuard.clientConfig(db, req.user.id, unsealAccessCode); if (!result) return res.status(404).json({ error: 'Hakuna WireGuard peer hai au subscription hai kwa sasa.' }); res.json(result); }
   catch (error) { console.error('WireGuard config retrieval failed:', error.message); res.status(503).json({ error: 'WireGuard server haijasanidiwa kikamilifu.' }); }
 });
+app.post('/api/admin/wireguard/orders/:id/provision', adminOnly, (req, res) => {
+  const order = db.prepare("SELECT id,user_id,status FROM orders WHERE id=? AND status='paid'").get(String(req.params.id));
+  if (!order) return res.status(404).json({ error: 'Paid order not found.' });
+  try {
+    const peer = ensureWireGuardPeer(order.user_id, order.id);
+    res.json({ ok: true, provisioned: true, peerId: peer.id, clientAddress: peer.client_address });
+  } catch (error) {
+    console.error('Admin WireGuard provisioning retry failed:', error.message);
+    res.status(503).json({ ok: false, provisioned: false, error: 'WireGuard provisioning is not ready. Check server configuration and interface.' });
+  }
+});
 app.get('/api/admin/wireguard/status', adminOnly, (_req, res) => {
   try { const cfg = WireGuard.validateConfig(); const { execFileSync } = require('node:child_process'); const state = execFileSync('wg', ['show', cfg.iface], { encoding: 'utf8', timeout: 5000 }); res.json({ configured: true, interface: cfg.iface, endpoint: cfg.endpoint, activePeers: db.prepare('SELECT COUNT(*) AS count FROM wireguard_peers WHERE revoked_at IS NULL').get().count, interfaceResponding: Boolean(state) }); }
   catch (error) { res.json({ configured: false, interfaceResponding: false, activePeers: db.prepare('SELECT COUNT(*) AS count FROM wireguard_peers WHERE revoked_at IS NULL').get().count, message: error.message }); }
