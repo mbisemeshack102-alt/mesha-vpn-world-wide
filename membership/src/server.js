@@ -255,7 +255,7 @@ function verifyAdminToken(token) {
   } catch { return false; }
 }
 function adminOnly(req, res, next) {
-  const bearer = String(req.headers.authorization || '').replace(/^Bearer\\s+/i, '');
+  const bearer = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   const tokenHash = crypto.createHash('sha256').update(bearer).digest('hex');
   const session = bearer && db.prepare('SELECT expires_at, revoked_at FROM admin_sessions WHERE token_hash = ?').get(tokenHash);
   const sessionOk = verifyAdminToken(bearer) && session && !session.revoked_at && session.expires_at > Date.now();
