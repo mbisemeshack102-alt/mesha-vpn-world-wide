@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">KEM VPN</string>
-    <string name="tagline">Muunganisho salama, popote ulipo</string>
+    <string name="app_name">KEM PRO WIFI</string>
+    <string name="tagline">Simamia vifurushi vya Wi-Fi na VPN sehemu moja</string>
     <string name="connect">UNGANISHA</string>
     <string name="disconnect">KATISHA</string>
     <string name="connecting">Inaunganisha VPN…</string>
@@ -20,7 +20,7 @@
     <string name="profile_imported">Profaili imeingizwa. Ikague kabla ya kuunganisha.</string>
     <string name="profile_import_failed">Imeshindikana kuingiza profaili: %1$s</string>
     <string name="config_hint">Bandika profaili yako binafsi ya WireGuard hapa…</string>
-    <string name="config_note">Pata profaili ya mteja kutoka kwa msimamizi wa seva ya KEM VPN. Profaili ina ufunguo binafsi: usiishiriki hadharani wala kuiweka GitHub. Programu hii haiundi intaneti yenyewe; inahitaji seva halali ya WireGuard.</string>
+    <string name="config_note">Pata profaili ya mteja kutoka kwa msimamizi wa seva ya KEM PRO WIFI. Profaili ina ufunguo binafsi: usiishiriki hadharani wala kuiweka GitHub. Programu hii haiundi intaneti yenyewe; inahitaji seva halali ya WireGuard.</string>
     <string name="privacy_title">Faragha yako ni muhimu</string>
     <string name="privacy_subtitle">Vinjari kwa usalama • Linda mawasiliano yako</string>
     <string name="connect_prompt">Bonyeza Unganisha kuanza VPN</string>
