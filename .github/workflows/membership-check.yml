@@ -23,4 +23,6 @@ jobs:
         working-directory: membership
         run: |
           node --check src/server.js
-          node --check src/wireguard.js
+          node --check public/app.js
+          node --check public/admin.js
+          node --check public/sw.js
