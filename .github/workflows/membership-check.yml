@@ -1,6 +1,7 @@
-name: Membership API checks
+name: KEM WIFI PRO SECURE checks
 on:
   push:
+    branches: [main, kem-vpn-foundation]
     paths:
       - "membership/**"
       - ".github/workflows/membership-check.yml"
@@ -9,20 +10,35 @@ on:
       - "membership/**"
       - ".github/workflows/membership-check.yml"
 jobs:
-  syntax:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install membership dependencies
+      - name: Install API dependencies
         working-directory: membership
         run: npm install
-      - name: Check JavaScript syntax
+      - name: Run automated tests
         working-directory: membership
+        run: npm test
+      - name: Check JavaScript syntax
         run: |
-          node --check src/server.js
-          node --check public/app.js
-          node --check public/admin.js
-          node --check public/sw.js
+          node --check membership/src/server.js
+          node --check membership/src/site-connector-auth.js
+          node --check membership/src/router-adapters.js
+          node --check membership/src/drivers/mikrotik-routeros.js
+          node --check membership/public/app.js
+          node --check membership/public/admin.js
+          node --check membership/public/sw.js
+      - name: Verify PWA branding and required files
+        run: |
+          grep -q 'KEM WIFI PRO SECURE' membership/public/index.html
+          grep -q 'KEM WIFI PRO SECURE' membership/public/admin.html
+          grep -q 'KEM WIFI PRO SECURE' membership/public/manifest.webmanifest
+          test -f membership/public/wifi-manager.svg
+          test -f membership/public/sw.js
+      - name: Verify VPN code is not part of the Wi-Fi API
+        run: |
+          ! grep -Eiq 'wireguard|WireGuard' membership/src/server.js
