@@ -1,16 +1,16 @@
 <!doctype html>
-<html lang="sw"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#071827"><meta name="description" content="Mfumo wa kusimamia vifurushi, wateja na router za Wi-Fi."><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/wifi-manager.svg" type="image/svg+xml"><title>Wi-Fi Package Manager — Akaunti ya Mteja</title><link rel="stylesheet" href="app.css"><script src="app.js" defer></script></head>
-<body><header class="top"><a class="brand" href="/">Wi-Fi <span>MANAGER</span></a><span class="secure">● Wi-Fi Package Manager</span></header><main class="wrap">
+<html lang="sw"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#071827"><meta name="description" content="KEM WIFI PRO SECURE — mfumo salama wa kusimamia vifurushi, wateja na router za Wi-Fi."><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/wifi-manager.svg" type="image/svg+xml"><title>KEM WIFI PRO SECURE — Akaunti ya Mteja</title><link rel="stylesheet" href="app.css"><script src="app.js" defer></script></head>
+<body><header class="top"><a class="brand" href="/">KEM <span>WIFI PRO SECURE</span></a><span class="secure">● KEM WIFI PRO SECURE</span></header><main class="wrap">
 <section class="panel server-settings">
   <div class="section-head"><div><p class="eyebrow">MUUNGANISHO</p><h2>Mipangilio ya Seva</h2></div><button id="server-settings-toggle" class="quiet" type="button">Fungua mipangilio</button></div>
   <div id="server-settings-panel" hidden>
-    <label>HTTPS URL ya Wi-Fi Manager API<input id="server-api-url" type="url" inputmode="url" placeholder="https://api.domain-yako.tld" autocomplete="url"></label>
+    <label>HTTPS URL ya KEM WIFI PRO SECURE API<input id="server-api-url" type="url" inputmode="url" placeholder="https://api.domain-yako.tld" autocomplete="url"></label>
     <div class="actions"><button id="server-api-save" class="primary" type="button">Hifadhi na jaribu</button><button id="server-api-clear" class="quiet" type="button">Ondoa URL</button></div>
     <p id="server-api-status" class="message" role="status">Weka HTTPS URL ya backend yako.</p>
   </div>
   <p id="server-connection-summary" class="muted">API haijathibitishwa. Weka URL ya backend.</p>
 </section>
-<section class="hero"><p class="eyebrow">KARIBU WI-FI PACKAGE MANAGER</p><h1>Simamia Wi-Fi yako.<br><span>Uza vifurushi kwa urahisi.</span></h1><p>Simamia vifurushi, wateja, vocha na malipo ya Wi-Fi sehemu moja.</p></section>
+<section class="hero"><p class="eyebrow">KARIBU KEM WIFI PRO SECURE</p><h1>Simamia Wi-Fi yako.<br><span>Uza vifurushi kwa urahisi.</span></h1><p>Simamia vifurushi, wateja, vocha na malipo ya Wi-Fi sehemu moja.</p></section>
 <section id="auth" class="panel"><div class="tabs"><button id="login-tab" class="tab active" type="button">Ingia</button><button id="register-tab" class="tab" type="button">Jisajili</button></div><form id="auth-form"><label>Namba ya simu<input id="phone" type="tel" inputmode="tel" placeholder="07XXXXXXXX" autocomplete="tel" required></label><label>Nenosiri<input id="password" type="password" minlength="8" maxlength="128" placeholder="Angalau herufi/namba 8" autocomplete="current-password" required></label><button class="primary" id="auth-submit">Ingia kwenye akaunti</button></form><p id="auth-message" class="message" role="status"></p></section>
 <section id="dashboard" hidden><div class="welcome"><div><p class="eyebrow">DASHBOARD YA MTEJA</p><h2>Karibu, <span id="account-phone"></span></h2></div><button id="logout" class="quiet">Toka</button></div>
 <div class="panel status"><div><p class="muted">Hali ya usajili</p><h3 id="subscription-status">Inapakia...</h3><p id="subscription-detail" class="muted"></p></div><span class="status-dot"></span></div>
@@ -18,4 +18,4 @@
 <div class="panel"><div class="section-head"><div><p class="eyebrow">UTHIBITISHO</p><h2>Verification code</h2></div><button id="refresh-codes" class="quiet">Onyesha upya</button></div><p class="muted">Code hutolewa baada ya malipo kuthibitishwa na muda wake huisha pamoja na kifurushi.</p><div id="codes" class="codes">Hakuna code bado.</div></div>
 <div class="panel"><div class="section-head"><div><p class="eyebrow">QR CODE</p><h2>QR ya uthibitisho</h2></div></div><p class="muted">Onyesha QR hii kwa msimamizi au iscanwe kuthibitisha kifurushi. QR ina kikomo cha matumizi kilichowekwa na admin.</p><div id="qr-codes" class="codes">QR itaonekana baada ya malipo kuthibitishwa.</div></div>
 </div></section>
-<p class="foot">Wi-Fi Package Manager · Usimamizi wa vifurushi vya Wi-Fi.</p></main><script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));}</script></body></html>
+<p class="foot">KEM WIFI PRO SECURE · Mfumo wa usimamizi wa vifurushi vya Wi-Fi.</p></main><script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));}</script></body></html>
