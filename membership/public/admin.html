@@ -52,6 +52,17 @@
 <p class="muted">Usiweke password ya router hapa kwa sasa. Tutaiunganisha kwa njia salama kupitia siri za seva, si ndani ya browser au APK.</p>
 </section>
 
+<section class="panel" id="connectors-panel">
+<h2>Site Connectors · Maeneo ya Wi-Fi</h2>
+<p class="muted">Tengeneza token ya kuunganisha kompyuta/Termux iliyo ndani ya mtandao wa router. Token hutumika mara moja ndani ya dakika 10. Hapa unaweza kuona na kuzuia connector.</p>
+<label for="connector-label">Jina la eneo (mfano: Duka Arusha)</label>
+<input id="connector-label" maxlength="80" placeholder="Eneo la Wi-Fi">
+<button id="create-connector" type="button">+ Tengeneza token ya kuunganisha</button>
+<div id="connector-enrollment" class="muted" role="status"></div>
+<button id="reload-connectors" type="button">Onyesha upya connectors</button>
+<div id="connector-list" class="muted" aria-live="polite"></div>
+<p class="danger">Kwa sasa connector inathibitisha usajili na heartbeat pekee. Haijaanza kutuma amri za router; usichukulie kuwa wateja au speed wanadhibitiwa moja kwa moja.</p>
+</section>
 <section class="panel">
 <h2>Vifurushi na bei</h2><p class="muted">Unaweza kuongeza vifurushi vingi kadiri unavyohitaji (kiwango cha juu 100). Bei ni TZS; data ni GB. Wateja wataona vifurushi vilivyohifadhiwa hapa.</p>
 <button id="add-plan" type="button">+ Ongeza kifurushi kipya</button>
