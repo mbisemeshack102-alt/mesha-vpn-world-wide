@@ -1,8 +1,8 @@
-# KEM VPN — VPS-first deployment and connectivity plan
+# KEM PRO WIFI — VPS-first deployment and connectivity plan
 
 ## Permanent architecture decision
 
-The VPS is a permanent core component of KEM VPN. Do not remove, replace with a phone-hosted server, or treat it as optional. The production VPS hosts the Membership API, persistent database/backup jobs, and the WireGuard server interface. Android devices are clients only.
+The VPS is a permanent core component of KEM PRO WIFI. Do not remove, replace with a phone-hosted server, or treat it as optional. The production VPS hosts the Membership API, persistent database/backup jobs, and the WireGuard server interface. Android devices are clients only.
 
 ## Network paths and test priority
 
