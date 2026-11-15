@@ -15,8 +15,8 @@ android {
     }
 
     defaultConfig {
-        buildConfigField("String", "SUPABASE_URL", "\"\${kemSupabaseUrl}\"")
-        buildConfigField("String", "SUPABASE_ANON_KEY", "\"\${kemSupabaseAnonKey}\"")
+        buildConfigField("String", "SUPABASE_URL", "\"${kemSupabaseUrl}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${kemSupabaseAnonKey}\"")
         applicationId = "com.kemvpn.app"
         minSdk = 26
         targetSdk = 35
