@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sw"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#071827"><title>Wi-Fi Package Manager — Akaunti ya Mteja</title><link rel="stylesheet" href="app.css"><script src="app.js" defer></script></head>
+<html lang="sw"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#071827"><meta name="description" content="Mfumo wa kusimamia vifurushi, wateja na router za Wi-Fi."><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/wifi-manager.svg" type="image/svg+xml"><title>Wi-Fi Package Manager — Akaunti ya Mteja</title><link rel="stylesheet" href="app.css"><script src="app.js" defer></script></head>
 <body><header class="top"><a class="brand" href="/">Wi-Fi <span>MANAGER</span></a><span class="secure">● Wi-Fi Package Manager</span></header><main class="wrap">
 <section class="panel server-settings">
   <div class="section-head"><div><p class="eyebrow">MUUNGANISHO</p><h2>Mipangilio ya Seva</h2></div><button id="server-settings-toggle" class="quiet" type="button">Fungua mipangilio</button></div>
@@ -18,4 +18,4 @@
 <div class="panel"><div class="section-head"><div><p class="eyebrow">UTHIBITISHO</p><h2>Verification code</h2></div><button id="refresh-codes" class="quiet">Onyesha upya</button></div><p class="muted">Code hutolewa baada ya malipo kuthibitishwa na muda wake huisha pamoja na kifurushi.</p><div id="codes" class="codes">Hakuna code bado.</div></div>
 <div class="panel"><div class="section-head"><div><p class="eyebrow">QR CODE</p><h2>QR ya uthibitisho</h2></div></div><p class="muted">Onyesha QR hii kwa msimamizi au iscanwe kuthibitisha kifurushi. QR ina kikomo cha matumizi kilichowekwa na admin.</p><div id="qr-codes" class="codes">QR itaonekana baada ya malipo kuthibitishwa.</div></div>
 </div></section>
-<p class="foot">Wi-Fi Package Manager · Usimamizi wa vifurushi vya Wi-Fi.</p></main></body></html>
+<p class="foot">Wi-Fi Package Manager · Usimamizi wa vifurushi vya Wi-Fi.</p></main><script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));}</script></body></html>
