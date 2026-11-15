@@ -1,6 +1,8 @@
 'use strict';
 
 // Vendor-neutral router integration registry. A listed adapter is not a live driver.
+const { validateDriver, getSupportedOperations } = require('./router-driver-contract');
+
 const BUILTIN_ADAPTERS = Object.freeze([
  { id:'mikrotik-routeros', label:'MikroTik RouterOS', connection:'site-connector', methods:['routeros-api'], capabilities:['hotspot-users','vouchers','speed-profiles','active-sessions','disconnect','usage-counters'], status:'planned', note:'Requires a tested RouterOS driver and restricted API account.' },
  { id:'openwrt', label:'OpenWrt', connection:'site-connector', methods:['ubus-rpc','hostapd','radius'], capabilities:['clients','access-control','speed-profiles','usage-counters'], status:'planned', note:'Depends on installed packages and exact OpenWrt release.' },
@@ -11,9 +13,29 @@ const BUILTIN_ADAPTERS = Object.freeze([
  { id:'manual', label:'Basic router (manual mode)', connection:'manual', methods:['manual'], capabilities:['package-display','payment-records','voucher-list'], status:'available', note:'Records sales and vouchers; cannot automatically enforce access or speed.' }
 ]);
 const drivers = new Map();
-function listAdapters(){ return BUILTIN_ADAPTERS.map(a=>({...a,methods:[...a.methods],capabilities:[...a.capabilities]})); }
-function getAdapter(id){ const a=BUILTIN_ADAPTERS.find(x=>x.id===id); return a?{...a,methods:[...a.methods],capabilities:[...a.capabilities]}:null; }
-function registerDriver(id,driver){ if(!getAdapter(id)) throw new Error('Unknown router adapter: '+id); if(!driver||typeof driver!=='object') throw new TypeError('Router driver object required'); for(const method of ['testConnection','getStatus']) if(typeof driver[method]!=='function') throw new TypeError('Router driver must implement '+method+'()'); if(drivers.has(id)) throw new Error('Router driver already registered: '+id); drivers.set(id,driver); }
-function getDriver(id){ return drivers.get(id)||null; }
-function getIntegrationStatus(id){ const a=getAdapter(id); return a?{...a,driverLoaded:drivers.has(id),ready:drivers.has(id)&&a.status==='available'}:null; }
-module.exports={listAdapters,getAdapter,registerDriver,getDriver,getIntegrationStatus};
+function listAdapters() {
+  return BUILTIN_ADAPTERS.map(adapter => {
+    const driver = drivers.get(adapter.id);
+    return { ...adapter, methods:[...adapter.methods], capabilities:[...adapter.capabilities],
+      driverLoaded:Boolean(driver), supportedOperations:getSupportedOperations(driver) };
+  });
+}
+function getAdapter(id) {
+  const adapter = BUILTIN_ADAPTERS.find(item => item.id === id);
+  return adapter ? { ...adapter, methods:[...adapter.methods], capabilities:[...adapter.capabilities] } : null;
+}
+function registerDriver(id, driver) {
+  if (!getAdapter(id)) throw new Error('Unknown router adapter: ' + id);
+  validateDriver(driver);
+  if (drivers.has(id)) throw new Error('Router driver already registered: ' + id);
+  drivers.set(id, driver);
+}
+function getDriver(id) { return drivers.get(id) || null; }
+function getIntegrationStatus(id) {
+  const adapter = getAdapter(id);
+  if (!adapter) return null;
+  const driver = getDriver(id);
+  return { ...adapter, driverLoaded:Boolean(driver), supportedOperations:getSupportedOperations(driver),
+    ready:Boolean(driver) && adapter.status === 'available' };
+}
+module.exports = { listAdapters, getAdapter, registerDriver, getDriver, getIntegrationStatus };
