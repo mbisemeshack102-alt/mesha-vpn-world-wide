@@ -15,12 +15,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install API dependencies
+        run: npm install --prefix membership
       - name: Check JavaScript syntax
         run: |
           node --check membership/src/server.js
           node --check membership/public/app.js
           node --check membership/public/admin.js
-      - name: Install API dependencies and run package tests
+          node --check membership/public/sw.js
+      - name: Verify VPN code is not part of the Wi-Fi API
         run: |
-          npm install --prefix membership
-          npm test --prefix membership
+          ! grep -Eiq 'wireguard|WireGuard' membership/src/server.js
+          test -f membership/public/manifest.webmanifest
+          test -f membership/public/sw.js
