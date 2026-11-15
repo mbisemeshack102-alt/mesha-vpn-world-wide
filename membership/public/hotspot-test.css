@@ -1,0 +1,16 @@
+*{box-sizing:border-box}
+body{margin:0;background:#071827;color:#edf5fb;font:16px system-ui,sans-serif}
+main{max-width:680px;margin:0 auto;padding:24px 16px}
+.card{background:#10283b;border:1px solid #24445d;border-radius:16px;padding:18px;margin:14px 0}
+h1{font-size:28px;margin:8px 0}
+h2{font-size:19px;margin:0 0 8px}
+.section-heading{margin-top:18px}
+.muted{color:#a9bdcc;line-height:1.55}
+button{background:#22c58b;color:#062319;border:0;border-radius:10px;padding:13px 18px;font-weight:700;font-size:16px}
+button:disabled{opacity:.65}
+.status{font-weight:700;margin-top:12px}
+.ok{color:#55e0a7}
+.bad{color:#ff9d9d}
+.wait{color:#ffd479}
+ol{padding-left:22px;line-height:1.7}
+.pill{display:inline-block;padding:5px 9px;border-radius:20px;background:#183b52;color:#b9d9eb;font-size:12px}
