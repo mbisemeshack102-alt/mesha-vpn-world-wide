@@ -22,6 +22,7 @@ jobs:
           npm install --prefix membership --omit=dev
           node --check membership/src/server.js
           node --check membership/public/admin.js
+          node --check membership/public/hotspot-test.js
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -31,10 +32,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
-      - name: Check backend JavaScript syntax
+      - name: Check backend and portal JavaScript syntax
         run: |
           node --check membership/src/server.js
           node --check membership/public/admin.js
+          node --check membership/public/hotspot-test.js
       - name: Build debug APK
         env:
           ORG_GRADLE_PROJECT_KEM_SUPABASE_URL: ${{ secrets.KEM_SUPABASE_URL }}
