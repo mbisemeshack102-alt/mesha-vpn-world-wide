@@ -60,6 +60,7 @@ async function loadSettings() {
   $('wifi-host').value = wifi.managementHost || '';
   $('wifi-enabled').checked = Boolean(wifi.enabled);
   await loadRouterAdapters(wifi.adapterId || wifi.routerType || 'manual');
+  await loadConnectors();
   $('status').textContent = 'Mipangilio imefunguliwa kwa ruhusa ya mmiliki.';
 }
 $('unlock').addEventListener('click', async () => {
