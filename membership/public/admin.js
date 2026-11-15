@@ -22,6 +22,25 @@ function showAdmin() {
   lockPanel.hidden = true;
   settings.hidden = false;
 }
+async function loadRouterAdapters(selectedId='manual') {
+  const data = await request('/api/admin/router-adapters');
+  const select = $('wifi-router');
+  const info = $('router-adapter-info');
+  select.innerHTML = '';
+  for (const adapter of data.adapters || []) {
+    const option = document.createElement('option');
+    option.value = adapter.id;
+    option.textContent = adapter.label + (adapter.status === 'available' ? ' · Manual/available' : ' · Inahitaji driver');
+    select.append(option);
+  }
+  select.value = (data.adapters || []).some(a => a.id === selectedId) ? selectedId : 'manual';
+  const renderInfo = () => {
+    const adapter = (data.adapters || []).find(a => a.id === select.value);
+    info.textContent = adapter ? adapter.note + ' Uwezo: ' + adapter.capabilities.join(', ') + '. Hali: ' + (adapter.status === 'available' ? 'inapatikana kwa mode ya mkono' : 'driver bado haijaunganishwa') : '';
+  };
+  select.onchange = renderInfo;
+  renderInfo();
+}
 async function loadSettings() {
   const data = await request('/api/admin/settings');
   const payment = data.payment || {};
@@ -40,6 +59,7 @@ async function loadSettings() {
   $('wifi-ssid').value = wifi.ssidLabel || '';
   $('wifi-host').value = wifi.managementHost || '';
   $('wifi-enabled').checked = Boolean(wifi.enabled);
+  await loadRouterAdapters(wifi.adapterId || wifi.routerType || 'manual');
   $('status').textContent = 'Mipangilio imefunguliwa kwa ruhusa ya mmiliki.';
 }
 $('unlock').addEventListener('click', async () => {
@@ -106,6 +126,7 @@ $('save').addEventListener('click', async () => {
         provider:$('wifi-provider').value,
         routerModel:$('wifi-model').value,
         routerType:$('wifi-router').value,
+        adapterId:$('wifi-router').value,
         ssidLabel:$('wifi-ssid').value,
         managementHost:$('wifi-host').value,
         enabled:$('wifi-enabled').checked
