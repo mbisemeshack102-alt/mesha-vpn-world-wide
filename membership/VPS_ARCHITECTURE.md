@@ -4,10 +4,12 @@
 
 The VPS is a permanent core component of KEM VPN. Do not remove, replace with a phone-hosted server, or treat it as optional. The production VPS hosts the Membership API, persistent database/backup jobs, and the WireGuard server interface. Android devices are clients only.
 
-## Network paths
+## Network paths and test priority
 
-- Android may reach the VPS over mobile data (SIM) or Wi-Fi.
-- The Android operating system chooses the active/default network. The app must not promise that it can switch the handset's SIM/Wi-Fi radio itself.
+- **Wi-Fi is the primary network path for initial setup and routine testing.** Validate the app and WireGuard tunnel on a stable Wi-Fi connection first.
+- **SIM/mobile data is the secondary path for additional testing.** After Wi-Fi passes, test the same VPS tunnel using mobile data, including reconnects and network handover.
+- Both Wi-Fi and mobile data can carry the WireGuard tunnel to the same permanent VPS. The VPS remains the hub in either case.
+- Android's operating system selects/manages the active/default network. The app must not promise that it can force the handset to switch its SIM/Wi-Fi radio.
 - WireGuard carries the VPN tunnel over whichever usable network Android routes it through. Mobile-data/Wi-Fi handover must be tested on supported Android versions and devices.
 - The HTTPS API endpoint and WireGuard UDP endpoint are separate endpoints and must both be configured and monitored.
 
@@ -47,9 +49,9 @@ Do not enable WireGuard provisioning until the chosen model has been security-re
 - [ ] `wg show wg0` reports the expected live interface.
 - [ ] API WireGuard status reports configured and responding.
 - [ ] A test paid subscription provisions exactly one peer (idempotency verified).
-- [ ] Android imports the generated config/QR and a real tunnel passes traffic.
+- [ ] Android imports the generated config/QR and a real tunnel passes traffic over Wi-Fi first.
+- [ ] The same tunnel is tested over SIM/mobile data, including reconnect and handover.
 - [ ] Peer is revoked at subscription expiry and admin revoke is tested.
-- [ ] SIM-only, Wi-Fi-only and SIM-to-Wi-Fi / Wi-Fi-to-SIM handover are tested on real Android devices.
 - [ ] Firewall, HTTPS, rate limits, backups, restore, logs and monitoring pass review.
 
 Until these checks pass, describe the project as under deployment/testing, not production-ready. A VPS purchase alone does not finish WireGuard, payment onboarding, Android integration or testing.
