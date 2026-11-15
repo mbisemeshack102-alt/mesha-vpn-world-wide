@@ -1,5 +1,5 @@
 'use strict';
-const CACHE = 'wifi-package-manager-v1';
+const CACHE = 'kem-wifi-pro-secure-v2';
 const CORE = ['/', '/admin', '/app.css', '/admin.css', '/app.js', '/admin.js', '/manifest.webmanifest', '/wifi-manager.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
