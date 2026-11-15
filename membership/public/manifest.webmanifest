@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "Wi-Fi Package Manager",
+  "short_name": "Wi-Fi Manager",
+  "description": "Simamia vifurushi, vocha, wateja na router za Wi-Fi.",
+  "lang": "sw-TZ",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#071827",
+  "theme_color": "#071827",
+  "icons": [
+    {"src": "/wifi-manager.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}
