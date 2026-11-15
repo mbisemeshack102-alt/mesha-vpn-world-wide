@@ -38,12 +38,18 @@ const authAttemptLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many attempts. Try again in 15 minutes.' }
 });
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Admin login attempts exceeded. Try again in 15 minutes.' }
+});
 
 const PORT = Number(process.env.PORT || 8080);
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
-const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
-if (!TOKEN_SECRET || TOKEN_SECRET.length < 32 || !ADMIN_API_KEY || ADMIN_API_KEY.length < 32) {
-  throw new Error('Set TOKEN_SECRET and ADMIN_API_KEY to random secrets of at least 32 characters.');
+if (!TOKEN_SECRET || TOKEN_SECRET.length < 32) {
+  throw new Error('Set TOKEN_SECRET to a random secret of at least 32 characters.');
 }
 
 const dbFile = path.resolve(process.env.DATABASE_FILE || './data/kem-membership.sqlite');
@@ -249,17 +255,14 @@ function verifyAdminToken(token) {
   } catch { return false; }
 }
 function adminOnly(req, res, next) {
-  const legacyKey = String(req.headers['x-admin-key'] || '');
-  const expected = Buffer.from(ADMIN_API_KEY);
-  const supplied = Buffer.from(legacyKey);
-  const keyOk = supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
-  const bearer = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  const bearer = String(req.headers.authorization || '').replace(/^Bearer\\s+/i, '');
   const tokenHash = crypto.createHash('sha256').update(bearer).digest('hex');
   const session = bearer && db.prepare('SELECT expires_at, revoked_at FROM admin_sessions WHERE token_hash = ?').get(tokenHash);
   const sessionOk = verifyAdminToken(bearer) && session && !session.revoked_at && session.expires_at > Date.now();
-  if (!keyOk && !sessionOk) return res.status(403).json({ error: 'Admin access denied or session expired' });
+  if (!sessionOk) return res.status(403).json({ error: 'Admin access denied or session expired' });
   next();
 }
+
 function addDuration(date, duration) {
   const result = new Date(date);
   if (duration === 'month') result.setUTCDate(result.getUTCDate() + 30);
@@ -363,6 +366,11 @@ async function verifyAndActivateClickPesaOrder(orderReference, webhookData) {
   return { alreadyPaid: false };
 }
 
+app.use('/api/admin', (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  next();
+});
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'KEM VPN Membership API' }));
 app.get('/api/plans', (_req, res) => {
   const plans = currentPlans();
@@ -490,7 +498,7 @@ app.post('/api/login', authAttemptLimiter, (req, res) => {
   res.json({ user: { id: user.id, phone: user.phone }, token: makeToken(user) });
 });
 
-app.post('/api/admin/login', authAttemptLimiter, (req, res) => {
+app.post('/api/admin/login', adminLoginLimiter, (req, res) => {
   const configuredHash = process.env.ADMIN_PIN_HASH || '';
   const pin = String(req.body.pin || '');
   if (!configuredHash || !/^\d{6}$/.test(pin)) return res.status(503).json({ error: 'Admin PIN is not configured on the server.' });
