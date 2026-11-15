@@ -8,6 +8,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const QRCode = require('qrcode');
+const RouterAdapters = require('./router-adapters');
 
 const app = express();
 app.disable('x-powered-by');
@@ -632,6 +633,10 @@ app.get('/verify/qr/:token', qrScanLimiter, (req, res) => {
   const ipHash = crypto.createHash('sha256').update(String(req.ip) + TOKEN_SECRET).digest('hex');
   db.prepare('INSERT INTO qr_scans(qr_token_id,scanned_at,ip_hash) VALUES(?,?,?)').run(qr.qr_id, nowIso(), ipHash);
   res.type('html').send('<!doctype html><html lang="sw"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KEM VPN · Uthibitisho</title><body style="font:16px system-ui;background:#071827;color:#edf6fb;padding:28px"><h1 style="color:#46d6d0">KEM VPN</h1><h2>Uanachama umethibitishwa</h2><p>Kifurushi: ' + escapeHtml(qr.plan_id) + '</p><p>Muda: ' + escapeHtml(qr.duration) + '</p><p>Inaisha: ' + escapeHtml(new Date(qr.expires_at).toLocaleString('sw-TZ')) + '</p><p>QR hii imetumika ' + (count + 1) + ' / ' + qrScanLimit() + ' mara.</p><p>QR hii inatumika kuthibitisha vocha ya kifurushi cha Wi-Fi.</p></body></html>');
+});
+// Router adapter catalogue: exposes supported integration choices, not router secrets.
+app.get('/api/admin/router-adapters', adminOnly, (_req, res) => {
+  res.json({ adapters: RouterAdapters.listAdapters() });
 });
 app.get('/api/admin/qr-scans', adminOnly, (_req, res) => {
   const scans = db.prepare(`SELECT qs.id, qs.scanned_at, qt.id AS qr_id, o.plan_id, o.duration, ac.expires_at
