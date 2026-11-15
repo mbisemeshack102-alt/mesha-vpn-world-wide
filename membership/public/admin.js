@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const API_BASE=((window.KemConfig&&window.KemConfig.apiBaseUrl())||localStorage.getItem('kem_api_base_url')||'').replace(/\/+$/,'');
-function apiUrl(url){if(!API_BASE)throw new Error('API ya KEM VPN haijaunganishwa. Weka HTTPS URL ya backend kwenye Mipangilio ya Seva.');return API_BASE+url;}
+function apiUrl(url){if(!API_BASE)throw new Error('API ya KEM PRO WIFI haijaunganishwa. Weka HTTPS URL ya backend kwenye Mipangilio ya Seva.');return API_BASE+url;}
 const TOKEN_KEY = 'kem_admin_session';
 const settings = $('admin-settings');
 const lockPanel = $('admin-lock');
