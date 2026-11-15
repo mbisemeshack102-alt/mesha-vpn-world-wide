@@ -1,0 +1,26 @@
+name: Membership API checks
+on:
+  push:
+    paths:
+      - "membership/**"
+      - ".github/workflows/membership-check.yml"
+  pull_request:
+    paths:
+      - "membership/**"
+      - ".github/workflows/membership-check.yml"
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install membership dependencies
+        working-directory: membership
+        run: npm install
+      - name: Check JavaScript syntax
+        working-directory: membership
+        run: |
+          node --check src/server.js
+          node --check src/wireguard.js
