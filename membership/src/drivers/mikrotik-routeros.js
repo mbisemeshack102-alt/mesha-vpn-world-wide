@@ -85,4 +85,11 @@ function makeDriver(transport) {
     }
   });
 }
-module.exports = { makeDriver };
+function registerMikrotikDriver(transport) {
+  const driver = makeDriver(transport);
+  const registry = require('../router-adapters');
+  registry.registerDriver('mikrotik-routeros', driver);
+  return driver;
+}
+
+module.exports = { makeDriver, registerMikrotikDriver };
