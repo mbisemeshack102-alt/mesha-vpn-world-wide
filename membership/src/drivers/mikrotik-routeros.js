@@ -12,7 +12,7 @@ function requiredString(value, name, max = 128) {
 }
 function safeRouterId(value) {
   const id = requiredString(value, 'RouterOS item id', 64);
-  if (!/^\\*[0-9A-Fa-f]+$/.test(id)) throw new TypeError('Invalid RouterOS item id.');
+  if (!/^\*[0-9A-Fa-f]+$/.test(id)) throw new TypeError('Invalid RouterOS item id.');
   return id;
 }
 function makeDriver(transport) {
