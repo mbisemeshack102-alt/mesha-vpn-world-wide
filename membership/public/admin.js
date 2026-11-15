@@ -166,3 +166,62 @@ $('wifi-status').addEventListener('click', async () => {
   } catch (error) { $('wifi-status-result').textContent = error.message; }
 });
 
+
+
+async function loadConnectors() {
+  const host = $('connector-list');
+  host.textContent = 'Inapakia...';
+  try {
+    const data = await request('/api/admin/site-connectors');
+    host.textContent = '';
+    if (!(data.connectors || []).length) { host.textContent = 'Bado hakuna connector iliyounganishwa.'; return; }
+    for (const connector of data.connectors) {
+      const row = document.createElement('div');
+      row.className = 'connector-row';
+      const details = document.createElement('p');
+      const lastSeen = connector.lastSeenAt ? new Date(connector.lastSeenAt).toLocaleString('sw-TZ') : 'Bado haijawahi kuwasiliana';
+      details.textContent = connector.label + ' · ID: ' + connector.id + ' · Mwisho kuonekana: ' + lastSeen +
+        (connector.revokedAt ? ' · IMEZUIWA' : ' · ' + (Date.now() - connector.lastSeenAt < 90000 ? 'ONLINE' : 'OFFLINE'));
+      row.append(details);
+      if (!connector.revokedAt) {
+        const revoke = document.createElement('button');
+        revoke.type = 'button'; revoke.textContent = 'Zuia connector';
+        revoke.addEventListener('click', async () => {
+          if (!confirm('Una uhakika unataka kuzuia connector hii?')) return;
+          revoke.disabled = true;
+          try { await request('/api/admin/site-connectors/' + encodeURIComponent(connector.id) + '/revoke', {method:'POST'}); await loadConnectors(); }
+          catch (error) { $('status').textContent = error.message; revoke.disabled = false; }
+        });
+        row.append(revoke);
+      }
+      host.append(row);
+    }
+  } catch (error) { host.textContent = error.message; }
+}
+$('create-connector').addEventListener('click', async () => {
+  const button = $('create-connector');
+  const label = $('connector-label').value.trim();
+  if (!label) { $('status').textContent = 'Andika jina la eneo kwanza.'; return; }
+  button.disabled = true;
+  try {
+    const data = await request('/api/admin/site-connectors/enrollments', {method:'POST', body:JSON.stringify({label})});
+    const host = $('connector-enrollment');
+    host.textContent = 'TOKEN YA MARA MOJA (inaisha: ' + new Date(data.expiresAt).toLocaleString('sw-TZ') + '): ';
+    const token = document.createElement('code');
+    token.textContent = data.enrollmentToken;
+    host.append(token);
+    const copy = document.createElement('button');
+    copy.type = 'button'; copy.textContent = 'Nakili token';
+    copy.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(data.enrollmentToken); copy.textContent = 'Imenakiliwa'; }
+      catch (_) { $('status').textContent = 'Nakili token kwa kuishikilia kisha Copy.'; }
+    });
+    host.append(copy);
+    const warning = document.createElement('p');
+    warning.textContent = 'Usimpe mteja token hii. Iweke kwenye Site Connector unayoisimamia. Token hii itaonekana mara hii tu.';
+    host.append(warning);
+    await loadConnectors();
+  } catch (error) { $('status').textContent = error.message; }
+  finally { button.disabled = false; }
+});
+$('reload-connectors').addEventListener('click', loadConnectors);
