@@ -51,7 +51,7 @@ if (!TOKEN_SECRET || TOKEN_SECRET.length < 32) {
   throw new Error('Set TOKEN_SECRET to a random secret of at least 32 characters.');
 }
 
-const dbFile = path.resolve(process.env.DATABASE_FILE || './data/kem-membership.sqlite');
+const dbFile = path.resolve(process.env.DATABASE_FILE || './data/wifi-manager.sqlite');
 fs.mkdirSync(path.dirname(dbFile), { recursive: true });
 const db = new Database(dbFile);
 db.pragma('journal_mode = WAL');
