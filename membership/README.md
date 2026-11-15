@@ -251,3 +251,24 @@ This is only a connectivity/API reachability check. It does not inspect Android 
 5. Confirm that both the network indicator and API check pass. Then test customer registration/login and the dashboard separately.
 
 Do not share admin keys, customer passwords, WireGuard private keys, or payment secrets while testing. Confirm that the mobile operator's plan permits hotspot sharing and commercial resale before offering paid access.
+
+## WireGuard peer provisioning (new integration)
+
+The API now includes a server-side WireGuard adapter in `src/wireguard.js`:
+- After a verified ClickPesa payment or an admin-confirmed payment, it attempts to create a unique WireGuard peer on the configured server interface.
+- Client private keys are encrypted at rest using the existing `TOKEN_SECRET`; public keys and assigned IPv4 addresses are stored in SQLite.
+- Authenticated customers can request `GET /api/wireguard/config`, which returns a WireGuard configuration and QR data URL for import into the WireGuard app.
+- Admins can inspect `GET /api/admin/wireguard/status`.
+- Expired peers are removed from the live interface when the API checks subscriptions.
+
+### VPS prerequisites before enabling this integration
+
+1. Install `wireguard` / `wireguard-tools` on the Ubuntu VPS and create, configure and bring up the server interface (normally `wg0`) with a persistent server private key stored only on the VPS.
+2. Configure IPv4 forwarding, firewall rules and NAT/masquerading for the VPS network interface. Open the selected UDP port (normally 51820) in both the VPS firewall and provider firewall.
+3. Set `WIREGUARD_INTERFACE`, `WIREGUARD_ENDPOINT`, `WIREGUARD_SERVER_PUBLIC_KEY`, and `WIREGUARD_CLIENT_CIDR` in the private VPS environment. The client subnet must match the subnet configured on the server interface. Give the API process only the Linux `CAP_NET_ADMIN` capability needed to run `wg set`; do not expose a root shell or broad sudo rights.
+4. Ensure the VPS has a public reachable IP/domain and that the endpoint UDP port is reachable. The API HTTPS domain and WireGuard UDP endpoint are separate settings.
+5. Verify `GET /api/admin/wireguard/status` reports `configured: true` and `interfaceResponding: true`, then test a real client tunnel before selling service.
+
+The adapter fails closed when WireGuard configuration or interface access is missing. A successful payment may still activate membership while peer provisioning remains pending; inspect server logs and retry provisioning after fixing the VPS. Never commit server private keys, customer private keys, `.env`, or real API credentials.
+
+**Important deployment note:** the existing Docker Compose starter has not been granted WireGuard network capabilities and does not automatically create the host VPN interface. Do not assume peer provisioning works in that container as-is. Configure a dedicated least-privilege host service or a properly isolated container with the required interface and `CAP_NET_ADMIN`, then test it on the actual VPS.
