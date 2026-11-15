@@ -1,5 +1,7 @@
 # KEM VPN Membership API (starter)
 
+For Android/Termux local setup, see [TERMUX.md](./TERMUX.md). The API requires Node.js 22+ because it uses better-sqlite3 13.x.
+
 This service is the first backend foundation for Bronze, Silver, Gold and Platinum memberships.
 
 ## Current status — prototype, not production-ready
@@ -15,7 +17,7 @@ The prices and quotas in `src/server.js` are draft examples. Review them against
 
 ## Install on a server
 
-Use a supported Ubuntu/Debian VPS with Node.js 20+.
+Use a supported Ubuntu/Debian VPS with Node.js 22+.
 
 ```sh
 cd membership
@@ -176,7 +178,7 @@ Login and registration attempts are rate-limited. This container setup is a depl
 - `POST /api/payments/clickpesa/webhook` — public ClickPesa callback. It does not trust the browser return page; it queries ClickPesa's payment status before activating the membership.
 - `GET /api/orders` — includes each order's checkout URL and status.
 
-The API uses Node.js 20+ built-in `fetch`; no additional payment SDK is required.
+The API uses Node.js 22+ built-in `fetch`; no additional payment SDK is required.
 
 
 ## Owner Admin Lock (new)
