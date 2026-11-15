@@ -1,274 +1,43 @@
-# KEM VPN Membership API (starter)
+# Wi-Fi Package Manager API (prototype)
 
-For Android/Termux local setup, see [TERMUX.md](./TERMUX.md). The API requires Node.js 22+ because it uses better-sqlite3 13.x.
+This service is being repurposed from an earlier VPN membership experiment into a **sellable Wi-Fi package management platform**.
 
-This service is the first backend foundation for Bronze, Silver, Gold and Platinum memberships.
+## Important scope
 
-## Current status — prototype, not production-ready
+- No VPN service, WireGuard tunnel, VPN exit server or VPN client configuration.
+- The software does not supply internet or data bundles. Each operator must already have an internet connection from an ISP, fibre provider or SIM/data router.
+- The software is intended to let multiple independent Wi-Fi operators buy/use their own licensed account, connect a supported router and manage their own customers and packages.
 
-- Phone-number registration and login.
-- Signed bearer sessions.
-- Day (1), week (7) and month (30-day) offers.
-- Pending orders and an admin-only manual payment confirmation route.
-- Subscription expiry is checked when the account requests `GET /api/me`.
-- Plan limits (data, speed and devices) are returned as entitlement metadata. They are **not yet enforced by WireGuard**.
+## Existing prototype features
 
-The prices and quotas in `src/server.js` are draft examples. Review them against actual SIM/router costs, bandwidth, gateway fees and your business plan before selling access.
+- Phone-number customer registration and login.
+- Package catalogue and subscription/order records.
+- Admin PIN session and editable package/payment settings.
+- QR/access-code scaffolding.
+- Preliminary router metadata fields.
 
-## Install on a server
+## Not implemented yet — do not represent as live
 
-Use a supported Ubuntu/Debian VPS with Node.js 22+.
+The current database is still single-operator; it does not yet provide tenant isolation or a software licensing/subscription system for buyers. Router settings are only metadata: there is no live router adapter, voucher/user creation, client disconnection, speed/data enforcement or live connected-client reporting. Payment settings are not proof of an active payment gateway. These capabilities must be built and tested before commercial release.
+
+## Required product implementation
+
+1. Add multi-tenant operator accounts and tenant_id isolation to every business-owned record.
+2. Add platform-owner licensing: create, activate, suspend and renew each buyer's software licence.
+3. Give each operator a separate dashboard, customer portal, package catalogue, payments and reports.
+4. Build a secure router adapter, starting with MikroTik RouterOS. Confirm exact model, RouterOS version, network topology and API permissions before integration.
+5. Provision hotspot vouchers/users after verified payment; enforce expiry, data quota, speed and device limits on the router/controller.
+6. Add live session/traffic reporting, audit logs, backup/restore and security tests.
+7. Test with a real supported router and ISP connection before selling.
+
+## Development
+
+Requires Node.js 22+.
 
 ```sh
-cd membership
 npm install
 cp .env.example .env
-mkdir -p data
-```
-
-Edit `.env`. Generate two different secrets:
-
-```sh
-openssl rand -hex 32
-openssl rand -hex 32
-```
-
-Put one in `TOKEN_SECRET`, the other in `ADMIN_API_KEY`. Create a salted hash for your own six-digit owner PIN with Node.js (replace the example PIN with your own; do not use `123456`):
-
-```sh
-node -e "const c=require('node:crypto');const p='REPLACE_WITH_YOUR_6_DIGIT_PIN';const s=c.randomBytes(16).toString('hex');console.log(s+':'+c.scryptSync(p,s,64).toString('hex'))"
-```
-
-Put the printed `salt:hash` value in `ADMIN_PIN_HASH`. Keep `.env` private and never upload it to GitHub. The PIN itself must never be committed or sent in chat.
-
-Start the API:
-
-```sh
 npm start
 ```
 
-For production, run it behind HTTPS using a reverse proxy and a process manager. Restrict the admin route at the firewall as well.
-
-## API outline
-
-- `GET /health`
-- `GET /api/plans`
-- `POST /api/register` — JSON: `{ "phone": "07XXXXXXXX", "password": "at-least-8-chars" }`
-- `POST /api/login` — same JSON fields
-- `GET /api/me` — `Authorization: Bearer <token>`
-- `POST /api/orders` — authenticated JSON: `{ "planId": "bronze", "duration": "day" }`; duration can be `day`, `week`, or `month`
-- `GET /api/orders` — authenticated order history
-- `POST /api/admin/orders/:id/confirm` — header `x-admin-key: <ADMIN_API_KEY>`, JSON: `{ "paymentReference": "verified-reference" }`
-
-## Payment gateway — ClickPesa integration added
-
-The API now has a ClickPesa Hosted Checkout integration scaffold using the current official API:
-- Authenticates server-to-server using the ClickPesa Client ID and API Key; the JWT is cached in memory.
-- Creates a unique checkout link for each authenticated KEM VPN order.
-- Returns the hosted checkout URL to the app/client.
-- Receives `PAYMENT RECEIVED` and `PAYMENT FAILED` webhook events at `POST /api/payments/clickpesa/webhook`.
-- Before activating a subscription, independently queries ClickPesa's payment-status API and checks the exact order reference, SUCCESS status, TZS currency, amount and payment reference.
-- Uses an idempotent database transaction so duplicate callbacks do not create duplicate subscriptions.
-- Optionally verifies ClickPesa's HMAC-SHA256 webhook checksum when `CLICKPESA_CHECKSUM_KEY` is configured.
-
-### Required ClickPesa setup
-
-1. Register KEM VPN as a merchant with ClickPesa and complete their business/KYC approval. The gateway's production API is not available until merchant onboarding is approved.
-2. In ClickPesa Dashboard → Settings → Developers, create a Hosted Checkout application and copy its Client ID and API Key. Configure the application webhook for `PAYMENT RECEIVED` and `PAYMENT FAILED`.
-3. Deploy this API on a public VPS domain with HTTPS. Set `PUBLIC_BASE_URL` to that exact HTTPS origin.
-4. Set `PAYMENT_PROVIDER=clickpesa`, `CLICKPESA_CLIENT_ID`, and `CLICKPESA_API_KEY` in the VPS environment. If checksum verification is enabled in ClickPesa, also set `CLICKPESA_CHECKSUM_KEY` to the same secret configured there.
-5. Restart the API. Make a small real payment after ClickPesa approves the account, then confirm the webhook and order status in the merchant dashboard and KEM VPN database.
-
-Example environment values (placeholders only):
-
-```env
-PAYMENT_PROVIDER=clickpesa
-PUBLIC_BASE_URL=https://api.your-real-domain.tld
-CLICKPESA_CLIENT_ID=your_client_id
-CLICKPESA_API_KEY=your_private_api_key
-CLICKPESA_CHECKSUM_KEY=your_checksum_key_if_enabled
-```
-
-Do not commit real values, send API keys in chat, or place them in the Android APK. Add them only to the VPS's private environment file. The example `.env.example` intentionally contains blanks.
-
-Until merchant approval, valid credentials, HTTPS deployment and a real payment test are complete, keep `PAYMENT_PROVIDER=manual_review`. In that mode the API refuses to create paid checkout orders; it does not pretend payments are live. The existing Airtel Lipa Namba settings are display-only and are not an automatic API integration.
-
-ClickPesa documents Hosted Checkout, token generation, payment status queries and webhooks here:
-- https://docs.clickpesa.com/api-reference/collection/generate-checkout-link/generate-checkout-link
-- https://docs.clickpesa.com/api-reference/authorization/generate-token
-- https://docs.clickpesa.com/api-reference/collection/querying-for-payments/querying-for-payments
-- https://docs.clickpesa.com/home/webhooks
-- https://docs.clickpesa.com/home/checksum
-
-## Still required before launch
-
-1. Connect this API to the Android app's registration, login, plan selection and order screens.
-2. Complete and test the official payment provider integration in sandbox, then production.
-3. Issue a unique WireGuard peer after a verified payment.
-4. Enforce expiry, data quota, speed and device limits at the VPN server; current metadata alone does not enforce them.
-5. Add admin UI, audit logs, backups, HTTPS, rate limiting, monitoring and recovery procedures.
-6. Test with a small number of consenting users and confirm that the internet provider's terms permit the intended sharing/resale.
-
-Do not promise unlimited data or unlimited simultaneous users. The owner-side SIM/Wi-Fi relay architecture is also a separate task from this membership API.
-
-
-## Editable Admin settings (new)
-
-The API now includes persistent settings stored in SQLite:
-
-- `GET /api/payment-settings` — returns the currently configured public payment instructions.
-- `GET /api/admin/settings` — protected by `x-admin-key`; returns payment and plan settings.
-- `PUT /api/admin/settings` — protected by `x-admin-key`; updates the Airtel Lipa Namba, recipient name, payment methods, instructions, and Bronze/Silver/Gold/Platinum prices, speeds, device counts and data allowances.
-
-Example request body (send only from a trusted admin tool over HTTPS):
-
-```json
-{
-  "payment": {
-    "airtelLipaNumber": "YOUR_AIRTEL_LIPA_NUMBER",
-    "recipientName": "YOUR_REGISTERED_RECIPIENT_NAME",
-    "enabledMethods": ["airtel_money", "mpesa", "mixx_by_yas", "halopesa", "bank", "visa", "mastercard"],
-    "instructions": "Follow the displayed merchant payment instructions."
-  },
-  "plans": {
-    "bronze": {"name":"Bronze","speedMbps":2,"devices":1,"data":{"day":1,"week":2,"month":10},"price":{"day":500,"week":1500,"month":5000}},
-    "silver": {"name":"Silver","speedMbps":5,"devices":2,"data":{"day":2,"week":5,"month":25},"price":{"day":1000,"week":3000,"month":10000}},
-    "gold": {"name":"Gold","speedMbps":10,"devices":3,"data":{"day":4,"week":12,"month":60},"price":{"day":2000,"week":6000,"month":20000}},
-    "platinum": {"name":"Platinum","speedMbps":15,"devices":5,"data":{"day":8,"week":25,"month":120},"price":{"day":3500,"week":10500,"month":35000}}
-  }
-}
-```
-
-The payment number is intentionally blank by default; configure it through the protected admin endpoint after verifying the official Airtel merchant details. The enabled methods are display/configuration flags only: mobile-money, bank and card checkout are **not** automatically processed by this endpoint. ClickPesa merchant onboarding, checkout API integration and verified webhooks are still required before automatic payment activation. Never put the admin key or payment-provider secrets in the Android APK.
-
-
-## Admin Dashboard (new)
-
-After deploying the membership API behind HTTPS, open `https://YOUR_API_HOST/admin/`. Enter the owner's six-digit PIN. The server verifies its salted scrypt hash (`ADMIN_PIN_HASH`) and issues a signed admin session that expires after 30 minutes. The dashboard uses this short-lived bearer token for protected settings routes; it does not store the PIN or embed the admin key in the Android APK. Use HTTPS only, keep the PIN private, and press **Funga Admin** when finished. Login attempts are rate-limited. The legacy `ADMIN_API_KEY` remains available for trusted server-side maintenance tools only.
-
-The API also exposes `GET /api/payment-settings` for public payment instructions. `GET /api/plans` now reads the configured plan values. Only supported payment method labels can be selected. These settings do not process or verify payments. Manual transaction review remains required until an official merchant checkout and signed webhook integration is implemented.
-
-
-## Docker deployment (new)
-
-On an Ubuntu/Debian VPS with Docker Engine and the Docker Compose plugin installed:
-
-```sh
-cd membership
-cp .env.example .env
-openssl rand -hex 32
-openssl rand -hex 32
-```
-
-Put the first generated value in `TOKEN_SECRET` and the second in `ADMIN_API_KEY` inside `.env`. Keep this file private; it is excluded from the Docker build. Then run:
-
-```sh
-docker compose -f compose.yaml up -d --build
-docker compose -f compose.yaml logs -f
-```
-
-The API listens on the VPS loopback address at port 8080, with SQLite data in a persistent Docker volume. Put a reverse proxy such as Caddy or Nginx in front and enable HTTPS before exposing it publicly. Do not change the port binding to `0.0.0.0` unless a secure reverse proxy/firewall is configured. Check `http://127.0.0.1:8080/health` from the VPS. The admin page will be available at `https://YOUR_API_HOST/admin/` after HTTPS is configured.
-
-Login and registration attempts are rate-limited. This container setup is a deployment starter, not a substitute for TLS, backups, monitoring, firewall rules, security updates, and a tested restore plan.
-
-
-## ClickPesa payment API endpoints
-
-- `POST /api/orders` — authenticated JSON: `{ "planId": "bronze", "duration": "month" }`. With ClickPesa configured, returns `payment.checkoutUrl` for the hosted payment page.
-- `POST /api/payments/clickpesa/webhook` — public ClickPesa callback. It does not trust the browser return page; it queries ClickPesa's payment status before activating the membership.
-- `GET /api/orders` — includes each order's checkout URL and status.
-
-The API uses Node.js 22+ built-in `fetch`; no additional payment SDK is required.
-
-
-## Owner Admin Lock (new)
-
-- `POST /api/admin/login` accepts `{ "pin": "six digits" }` and checks the server-only `ADMIN_PIN_HASH`.
-- Successful login returns a signed admin token valid for 30 minutes. Protected admin endpoints accept it as `Authorization: Bearer <token>`.
-- The dashboard at `/admin/` now has an owner PIN lock and a manual lock button.
-- If `ADMIN_PIN_HASH` is blank, PIN login is disabled. Configure it on the VPS before using the dashboard. Never put the PIN or its hash in the APK or GitHub.
-- This protects the management dashboard; it does not yet add customer accounts, WireGuard peer provisioning, or in-app admin screens.
-
-
-## Customer verification codes (new)
-
-After an order is confirmed as paid (either by a verified ClickPesa payment-status check/webhook or by an owner-confirmed manual payment), the API creates one unique access verification code for that order. The code is tied to the purchased plan and expires at the exact same timestamp as the resulting subscription: 1 day, 7 days, or 30 days from activation. Pending, rejected, and unverified orders do not receive codes.
-
-- `GET /api/access-codes` — authenticated customer endpoint returning that customer's currently valid codes and expiry timestamps.
-- `POST /api/access-codes/verify` — authenticated JSON: `{ "code": "KEM-XXXXXXXXXXXX" }`; returns valid only when the code belongs to the logged-in user and its subscription has not expired or been revoked.
-
-Codes are generated using cryptographic randomness, stored encrypted at rest (AES-256-GCM) with a SHA-256 lookup hash, and never exposed to other customers. Keep `TOKEN_SECRET` private and stable: changing it will prevent decrypting previously issued codes. This code layer does not itself provision or enforce a WireGuard peer; VPN server integration is still required before the code can grant network access.
-
-
-## Customer web dashboard
-
-The customer dashboard is served from the membership service root URL (for example, `https://your-domain/`). It provides phone/password registration and login, current subscription status, configured plans and prices, payment instructions, order history, and access-code display. The page calls the existing authenticated endpoints: `/api/register`, `/api/login`, `/api/me`, `/api/plans`, `/api/payment-settings`, `/api/orders`, and `/api/access-codes`.
-
-The customer page is a web dashboard, not an Android APK. Automatic checkout remains unavailable until ClickPesa merchant credentials, checksum configuration as required by the merchant, and a public HTTPS `PUBLIC_BASE_URL` are configured. Prices currently marked as draft must be reviewed by the administrator before taking payments. Access codes are issued only after a payment is verified and activated. The dashboard does not yet configure WireGuard peers or establish a VPN tunnel; a provisioned VPN server and peer-management integration are still required.
-
-
-## QR membership verification
-
-- The API generates a unique opaque QR URL for each active access code through `GET /api/qr-codes` (customer authentication required).
-- QR secrets are stored as SHA-256 hashes for lookup and AES-256-GCM encrypted at rest so the same QR remains stable when the customer refreshes the dashboard.
-- Scanning opens `/verify/qr/:token`; the server checks the related access code and subscription status, expiry, revocation, and the administrator's scan limit before recording the scan.
-- Admin settings include `qr.maxScans` (1–1000, default 3). Admin scan history is available at `GET /api/admin/qr-scans`; an admin can revoke a QR with `POST /api/admin/qr/:id/revoke`.
-- QR scanning verifies membership only. It does not configure or connect WireGuard; VPN connection provisioning requires a deployed VPS and WireGuard peer-management backend.
-- Install dependencies from this directory with `npm install`; the QR renderer uses the `qrcode` package.
-
-## WiFi / Hotspot management foundation (prepared)
-
-The admin dashboard includes initial WiFi controller settings for MikroTik, TP-Link, Tenda, Huawei, OpenWrt or another router, plus an SSID label and LAN management host. The protected `GET /api/admin/wifi/status` endpoint deliberately reports `connectionState: not_connected`, `integrationReady: false`, and unknown client counts until a real router/controller adapter is installed and tested.
-
-**Important limitations:** these settings do not yet connect to a router, create hotspot users/vouchers, disconnect devices, enforce speed/data quotas, or report live clients. Router credentials are intentionally not collected in the browser. A secure server-side adapter must be implemented for the chosen router and reachable from the KEM VPN server on the same LAN/VPN management network. The router must support an appropriate API/controller interface. The actual integration and live testing require the router model, LAN topology, admin-created restricted API account, and network access. Do not expose router management ports directly to the public internet.
-
-Planned adapter capabilities after router selection and secure setup:
-- Read connected clients and traffic counters.
-- Create/expire hotspot vouchers from paid KEM packages.
-- Apply speed and data limits supported by the router.
-- Suspend/re-enable client sessions and record admin actions.
-- Keep WiFi hotspot and WireGuard VPN entitlements separate but manageable in one admin dashboard.
-
-No router is currently connected by this scaffold; it is configuration preparation only.
-
-## Supported WiFi provider/router profiles
-
-The WiFi setup supports provider labels for TP-Link, Airtel, Vodacom and Yas, and stores the exact router model separately. Airtel, Vodacom and Yas are service providers rather than a single router API: their supplied devices may be Huawei, ZTE or other OEM models. The selected provider/model is descriptive configuration only; no generic provider API is assumed. Live client monitoring, voucher provisioning and enforcement must be implemented and tested against the exact model, firmware, supported local API and network topology. Never infer router credentials or expose management ports publicly.
-
-
-## Android hotspot connectivity test (new)
-
-A public, read-only test page is available at `/hotspot-test.html`. Open it on the Android phone that shares its mobile-data connection and on a second phone connected to that phone's hotspot. The page checks the browser's online indicator and requests the API's existing `GET /health` endpoint without authentication.
-
-This is only a connectivity/API reachability check. It does not inspect Android hotspot clients, create a VPN tunnel, provision WireGuard peers, or make a phone reachable from the public internet. The API must first be deployed on a reachable HTTPS host for the API check to pass. A remote WireGuard test still requires a public VPS/server and configured peers; mobile carrier CGNAT commonly prevents direct inbound connections to a phone hotspot.
-
-### Quick test
-
-1. Deploy the membership API securely (HTTPS) and confirm `/health` returns `{ "ok": true }`.
-2. On Android, enable mobile data and Personal Hotspot.
-3. Connect a second phone to that hotspot.
-4. Open `https://YOUR_API_HOST/hotspot-test.html` on both phones and tap **Jaribu tena**.
-5. Confirm that both the network indicator and API check pass. Then test customer registration/login and the dashboard separately.
-
-Do not share admin keys, customer passwords, WireGuard private keys, or payment secrets while testing. Confirm that the mobile operator's plan permits hotspot sharing and commercial resale before offering paid access.
-
-## WireGuard peer provisioning (new integration)
-
-The API now includes a server-side WireGuard adapter in `src/wireguard.js`:
-- After a verified ClickPesa payment or an admin-confirmed payment, it attempts to create a unique WireGuard peer on the configured server interface.
-- Client private keys are encrypted at rest using the existing `TOKEN_SECRET`; public keys and assigned IPv4 addresses are stored in SQLite.
-- Authenticated customers can request `GET /api/wireguard/config`, which returns a WireGuard configuration and QR data URL for import into the WireGuard app.
-- Admins can inspect `GET /api/admin/wireguard/status` and retry a paid order with `POST /api/admin/wireguard/orders/:id/provision`.
-- Expired peers are removed from the live interface when the API checks subscriptions.
-
-### VPS prerequisites before enabling this integration
-
-1. Install `wireguard` / `wireguard-tools` on the Ubuntu VPS and create, configure and bring up the server interface (normally `wg0`) with a persistent server private key stored only on the VPS.
-2. Configure IPv4 forwarding, firewall rules and NAT/masquerading for the VPS network interface. Open the selected UDP port (normally 51820) in both the VPS firewall and provider firewall.
-3. Set `WIREGUARD_INTERFACE`, `WIREGUARD_ENDPOINT`, `WIREGUARD_SERVER_PUBLIC_KEY`, and `WIREGUARD_CLIENT_CIDR` in the private VPS environment. The client subnet must match the subnet configured on the server interface. Give the API process only the Linux `CAP_NET_ADMIN` capability needed to run `wg set`; do not expose a root shell or broad sudo rights.
-4. Ensure the VPS has a public reachable IP/domain and that the endpoint UDP port is reachable. The API HTTPS domain and WireGuard UDP endpoint are separate settings.
-5. Verify `GET /api/admin/wireguard/status` reports `configured: true` and `interfaceResponding: true`, then test a real client tunnel before selling service.
-
-The adapter fails closed when WireGuard configuration or interface access is missing. A successful payment may still activate membership while peer provisioning remains pending; inspect server logs and retry provisioning after fixing the VPS. Never commit server private keys, customer private keys, `.env`, or real API credentials.
-
-**Important deployment note:** the existing Docker Compose starter has not been granted WireGuard network capabilities and does not automatically create the host VPN interface. Do not assume peer provisioning works in that container as-is. Configure a dedicated least-privilege host service or a properly isolated container with the required interface and `CAP_NET_ADMIN`, then test it on the actual VPS.
+Set a strong random TOKEN_SECRET and owner PIN hash in the private environment. Run behind HTTPS. Never commit secrets or router credentials.
