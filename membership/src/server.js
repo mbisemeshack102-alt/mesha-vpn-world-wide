@@ -9,6 +9,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const QRCode = require('qrcode');
 const RouterAdapters = require('./router-adapters');
+const SiteConnectorAuth = require('./site-connector-auth');
 
 const app = express();
 app.disable('x-powered-by');
@@ -361,6 +362,7 @@ app.use('/api/admin', (_req, res, next) => {
   next();
 });
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'Wi-Fi Package Manager API' }));
+SiteConnectorAuth.installSchema(db);
 app.get('/api/plans', (_req, res) => {
   const plans = currentPlans();
   const result = Object.entries(plans).map(([id, p]) => ({
@@ -637,6 +639,36 @@ app.get('/verify/qr/:token', qrScanLimiter, (req, res) => {
 // Router adapter catalogue: exposes supported integration choices, not router secrets.
 app.get('/api/admin/router-adapters', adminOnly, (_req, res) => {
   res.json({ adapters: RouterAdapters.listAdapters() });
+});
+app.post('/api/admin/site-connectors/enrollments', adminOnly, (req, res) => {
+  try {
+    const enrollment = SiteConnectorAuth.createEnrollment(db, { label: req.body && req.body.label });
+    res.status(201).json({ enrollmentToken: enrollment.token, expiresAt: new Date(enrollment.expiresAt).toISOString(),
+      warning: 'Token hii itatumika mara moja tu. Itume kwa connector salama; usiiweke kwenye browser ya mteja.' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+app.get('/api/admin/site-connectors', adminOnly, (_req, res) => {
+  res.json({ connectors: SiteConnectorAuth.listConnectors(db) });
+});
+app.post('/api/admin/site-connectors/:id/revoke', adminOnly, (req, res) => {
+  const id = String(req.params.id || '');
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'Connector ID si sahihi.' });
+  if (!SiteConnectorAuth.revokeConnector(db, id)) return res.status(404).json({ error: 'Connector haipo au tayari imezuiwa.' });
+  res.json({ ok: true, message: 'Connector imezuiwa.' });
+});
+app.post('/api/site-connectors/enroll', authAttemptLimiter, (req, res) => {
+  const enrolled = SiteConnectorAuth.consumeEnrollment(db, req.body && req.body.enrollmentToken);
+  if (!enrolled) return res.status(401).json({ error: 'Enrollment token si sahihi, imeisha muda, au imeshatumika.' });
+  res.status(201).json({ connectorId: enrolled.connectorId, token: enrolled.token,
+    warning: 'Hifadhi token hii ndani ya connector tu. Haitarudishwa tena.' });
+});
+app.post('/api/site-connectors/heartbeat', authAttemptLimiter, (req, res) => {
+  const token = String(req.headers.authorization || '').replace(/^Bearer\\s+/i, '');
+  const connector = SiteConnectorAuth.authenticateConnector(db, token);
+  if (!connector) return res.status(401).json({ error: 'Connector token si sahihi au imezuiwa.' });
+  res.json({ ok: true, connectorId: connector.id, serverTime: nowIso(), commands: [] });
 });
 app.get('/api/admin/qr-scans', adminOnly, (_req, res) => {
   const scans = db.prepare(`SELECT qs.id, qs.scanned_at, qt.id AS qr_id, o.plan_id, o.duration, ac.expires_at
