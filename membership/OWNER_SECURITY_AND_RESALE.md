@@ -1,4 +1,4 @@
-# KEM VPN owner security and resale readiness
+# KEM PRO WIFI owner security and resale readiness
 
 ## Owner-only administration
 
@@ -19,7 +19,7 @@
 
 ## Selling / white-label readiness
 
-The current branch is a single-owner, single-tenant KEM VPN deployment. It is not yet a multi-tenant reseller platform. Before selling copies or hosting multiple independent operators, implement and test:
+The current branch is a single-owner, single-tenant KEM PRO WIFI deployment. It is not yet a multi-tenant reseller platform. Before selling copies or hosting multiple independent operators, implement and test:
 1. tenant/operator records and strict tenant scoping on every database query;
 2. owner, reseller, and support roles with least privilege;
 3. per-tenant branding, domain, pricing, payment credentials and usage limits;
