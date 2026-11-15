@@ -2,11 +2,11 @@
 <html lang="sw">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0b1424"><title>KEM VPN Admin</title>
+<meta name="theme-color" content="#0b1424"><title>KEM PRO WIFI Admin</title>
 <link rel="stylesheet" href="admin.css">
 </head>
 <body><main>
-<header class="brand-header"><img src="/kem-vpn-logo.svg" alt="KEM VPN logo" style="display:block;width:min(190px,55vw);height:auto;margin:0 auto 16px"><h1>KEM VPN · ADMIN</h1><p>Admin Dashboard · Usimamizi wa malipo na vifurushi</p></header>
+<header class="brand-header"><img src="/kem-vpn-logo.svg" alt="KEM PRO WIFI logo" style="display:block;width:min(190px,55vw);height:auto;margin:0 auto 16px"><h1>KEM PRO WIFI · ADMIN</h1><p>Admin Dashboard · Usimamizi wa Wi-Fi, vifurushi, malipo na VPN</p></header>
 <section class="panel" id="admin-lock">
 <h2>Uthibitisho wa mmiliki</h2>
 <label for="pin">PIN ya siri ya mmiliki (tarakimu 6)</label>
@@ -38,7 +38,7 @@
 <h2>Udhibiti wa QR Code</h2><p class="muted">Weka idadi ya juu ya mara QR moja inaweza kuscan. Unaweza pia kuangalia historia na kuzuia QR iliyotumika.</p><label for="qr-max-scans">Kikomo cha scans kwa QR (1–1000)</label><input id="qr-max-scans" type="number" min="1" max="1000" value="3"><button id="load-qr-scans" type="button">Angalia historia ya QR scans</button><div id="qr-scan-history" class="muted"></div>
 </section>
 <section class="panel">
-<h2>Usimamizi wa WiFi / Hotspot</h2>
+<h2>Usimamizi wa Wi-Fi Hotspot</h2>
 <p class="muted">Andaa aina ya router na taarifa za mtandao. Hii ni hatua ya maandalizi tu: haitabadilisha router wala kuunganisha wateja mpaka router API na seva ziunganishwe kwenye mtandao wa ndani.</p>
 <label for="wifi-provider">Mtoa huduma / chapa</label>
 <select id="wifi-provider"><option value="none">Sijachagua</option><option value="tplink">TP-Link</option><option value="airtel">Airtel</option><option value="vodacom">Vodacom</option><option value="yas">Yas</option><option value="other">Nyingine</option></select>
@@ -47,7 +47,7 @@
 <select id="wifi-router"><option value="none">Bado sijachagua</option><option value="mikrotik">MikroTik</option><option value="tplink">TP-Link</option><option value="tenda">Tenda</option><option value="huawei">Huawei</option><option value="openwrt">OpenWrt</option><option value="other">Nyingine</option></select>
 <label for="wifi-ssid">Jina la WiFi (SSID)</label><input id="wifi-ssid" maxlength="32" placeholder="Mfano: KEM WiFi">
 <label for="wifi-host">Anwani ya router/controller (LAN IP au hostname)</label><input id="wifi-host" maxlength="253" placeholder="Mfano: 192.168.88.1">
-<label><input id="wifi-enabled" type="checkbox"> Iweke tayari kwa kuunganishwa na KEM VPN baadaye</label>
+<label><input id="wifi-enabled" type="checkbox"> Iweke tayari kwa kuunganishwa na KEM PRO WIFI baadaye</label>
 <button id="wifi-status" type="button">Angalia hali ya muunganisho</button><p id="wifi-status-result" class="muted" role="status"></p>
 <p class="muted">Usiweke password ya router hapa kwa sasa. Tutaiunganisha kwa njia salama kupitia siri za seva, si ndani ya browser au APK.</p>
 </section>
