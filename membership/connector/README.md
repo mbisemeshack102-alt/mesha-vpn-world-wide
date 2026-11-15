@@ -1,14 +1,14 @@
-# Wi-Fi Package Manager Site Connector (bootstrap)
+# KEM WIFI PRO SECURE Site Connector (bootstrap)
 
 ## Requirements
 
 - Node.js 22 or newer.
-- A reachable Wi-Fi Package Manager API.
+- A reachable KEM WIFI PRO SECURE API.
 - HTTPS for any non-local deployment.
 
 ## First enrollment
 
-1. Sign in to the Wi-Fi Package Manager admin panel/API.
+1. Sign in to the KEM WIFI PRO SECURE admin panel/API.
 2. Create a one-time token using `POST /api/admin/site-connectors/enrollments`.
 3. On the local computer/Raspberry Pi inside the operator's network, set:
 
