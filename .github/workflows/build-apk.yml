@@ -1,4 +1,4 @@
-name: Build KEM VPN APK
+name: Check Wi-Fi Package Manager
 on:
   push:
     branches: [main, kem-vpn-foundation]
@@ -8,43 +8,19 @@ on:
 permissions:
   contents: read
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Install API dependencies and check syntax
-        run: |
-          npm install --prefix membership --omit=dev
-          node --check membership/src/server.js
-          node --check membership/public/admin.js
-          node --check membership/public/hotspot-test.js
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.9"
-      - name: Check backend and portal JavaScript syntax
+          node-version: '22'
+      - name: Check JavaScript syntax
         run: |
           node --check membership/src/server.js
+          node --check membership/public/app.js
           node --check membership/public/admin.js
-          node --check membership/public/hotspot-test.js
-      - name: Build debug APK
-        env:
-          ORG_GRADLE_PROJECT_KEM_SUPABASE_URL: ${{ secrets.KEM_SUPABASE_URL }}
-          ORG_GRADLE_PROJECT_KEM_SUPABASE_ANON_KEY: ${{ secrets.KEM_SUPABASE_ANON_KEY }}
-        run: gradle --no-daemon assembleDebug
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: kem-vpn-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+      - name: Install API dependencies and run package tests
+        run: |
+          npm install --prefix membership
+          npm test --prefix membership
