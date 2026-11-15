@@ -1,49 +1,30 @@
-# KEM PRO WIFI
+# Wi-Fi Package Manager
 
-KEM PRO WIFI is a Wi-Fi package management platform with an Android client, hotspot preparation, customer membership and integrated WireGuard remote VPN.
+A web-based Wi-Fi business management platform. Each Wi-Fi operator will be able to manage their own customers, packages, vouchers, payments and compatible router from one dashboard.
 
-## Android client status
+## Product direction
 
-- Kotlin Android app
-- Embedded official WireGuard tunnel library
-- Paste a client WireGuard profile
-- Android VPN permission prompt
-- Connect and disconnect actions
-- GitHub Actions debug APK build
+This project is **not a VPN service**. WireGuard, VPN subscriptions, VPN client configuration and VPN exit-server functionality are out of scope. The software does not provide internet connectivity or bandwidth: each operator supplies their own internet connection through an ISP, fibre or a SIM/data router.
 
-The client can establish a real WireGuard tunnel **only after** a working server is deployed and a valid client profile is issued. The APK does not create internet access on its own.
+## Planned operator features
 
-## Build APK
+- Separate operator accounts and isolated businesses (multi-tenant SaaS).
+- Operator dashboard for customers, plans, vouchers, payments, sessions and reports.
+- Time-based and data-based packages with price, speed, expiry and device limits.
+- Router connection through a secure, server-side adapter.
+- Create and expire hotspot vouchers/users, disconnect clients and apply supported speed/data limits.
+- Platform owner console for software licences, operator accounts and support.
 
-Open the Actions tab and select **Build KEM PRO WIFI APK**. After the workflow succeeds, open its run and download the `kem-vpn-debug-apk` artifact. It contains `app-debug.apk`.
+## Router integration
 
-You can also build locally with JDK 17 and Gradle 8.9 using `gradle assembleDebug`.
+Router control is model-specific. The first practical integration target should be MikroTik RouterOS (HotSpot/User Manager or RouterOS API). Other brands such as TP-Link, Huawei and Tenda can only be supported where the exact model/firmware exposes a documented controller/API that permits these operations. A generic Wi-Fi router cannot automatically be controlled just because it broadcasts Wi-Fi.
 
-## Deploy a starter WireGuard exit server
+Never expose router admin ports to the public internet or store router passwords in browser code. Use a restricted router API account and a secure management path.
 
-Use a fresh Ubuntu 22.04/24.04 VPS with a public IPv4 address. This VPS is the VPN exit point, so client traffic exits through the VPS internet connection.
+## Current repository status
 
-1. SSH into the VPS.
-2. Copy `server/setup-wireguard.sh` to the VPS and run `sudo bash setup-wireguard.sh`.
-3. Allow inbound UDP port 51820 in the VPS provider firewall/security group.
-4. Copy `server/add-peer.sh` to the VPS.
-5. Run `sudo bash add-peer.sh phone1 YOUR_VPS_PUBLIC_IP`.
-6. Transfer the generated file under `/root/kem-vpn-clients/` securely to the phone. Do not commit it to GitHub.
-7. Open KEM PRO WIFI, paste the complete profile, and press CONNECT.
+The existing membership backend and customer/admin pages are a prototype. The current database and admin model were originally single-operator and contain legacy VPN functionality. The web UI is being redirected to Wi-Fi package management, but multi-tenant isolation, software licensing, router adapters, voucher provisioning, live session monitoring and quota enforcement still need implementation and hardware testing. Do not sell it as a finished router controller yet.
 
-The scripts create server keys only on the VPS and client keys only in the root-only client directory. Keep all keys private. Revoke a client by removing its peer from wg0 and the persistent config; do not simply share one profile among customers.
+## Run the membership API prototype
 
-## Important: phone data sharing vs VPS VPN
-
-A normal Android VPN app cannot automatically re-share the phone's SIM/Wi-Fi internet to remote users. The setup above uses the VPS bandwidth and VPS internet as the exit. To make remote users exit through your own SIM/Wi-Fi, a separate always-on owner gateway and reverse/site-to-site tunnel are required; Android carrier NAT, tethering restrictions, battery limits and operator terms can prevent this. Do not assume a phone alone can serve unlimited remote users.
-
-## Capacity and cost
-
-"Free" can mean you do not charge users, but the VPS, bandwidth and maintenance still cost money. Unlimited registered accounts are not the same as unlimited simultaneous users or speed. Start with a small, authorized test group and monitor bandwidth.
-
-## Security
-
-- Never commit WireGuard .conf files, private keys, passwords, or server credentials.
-- Use one unique profile per user/device.
-- If a profile is exposed, revoke and replace it immediately.
-- Check local telecom and VPS provider terms before reselling or sharing connectivity.
+See [membership/README.md](membership/README.md). Production use requires HTTPS, secrets, backups, monitoring, tenant isolation and a tested router adapter.
