@@ -136,10 +136,13 @@ class MainActivity : Activity() {
         val supabaseUrl = BuildConfig.SUPABASE_URL.trim().trimEnd('/')
         val anonKey = BuildConfig.SUPABASE_ANON_KEY.trim()
         val endpoint = if (supabaseUrl.isNotEmpty()) "$supabaseUrl/functions/v1/kem-ai" else ""
-        if (endpoint.isEmpty()) {
+        val endpointUri = runCatching { Uri.parse(endpoint) }.getOrNull()
+        val validEndpoint = endpointUri?.scheme == "https" && !endpointUri.host.isNullOrBlank() &&
+            !supabaseUrl.contains("$" + "{") && !supabaseUrl.contains("}")
+        if (!validEndpoint || anonKey.isBlank()) {
             AlertDialog.Builder(this)
                 .setTitle("KEM AI ONLINE")
-                .setMessage("KEM AI bado haijaunganishwa na mradi wa Supabase. Tunahitaji kuweka URL na anon key za KEM VPN kwenye mipangilio ya build, kisha OPENAI_API_KEY ihifadhiwe kwenye Supabase Secrets. Ufunguo wa OpenAI hautawekwa ndani ya APK.")
+                .setMessage("KEM AI haijaunganishwa bado. Weka KEM_SUPABASE_URL na KEM_SUPABASE_ANON_KEY kwenye GitHub Actions Secrets, deploy Edge Function ya kem-ai, kisha hifadhi OPENAI_API_KEY kwenye Supabase Secrets. Ufunguo wa OpenAI hautawekwa ndani ya APK.")
                 .setPositiveButton("Sawa", null)
                 .show()
             return
