@@ -341,7 +341,11 @@ function activatePaidOrder(order, paymentReference) {
 async function verifyAndActivateClickPesaOrder(orderReference, webhookData) {
   const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderReference);
   if (!order) throw new Error('Unknown KEM VPN order reference.');
-  if (order.status === 'paid') return { alreadyPaid: true };
+  if (order.status === 'paid') {
+    try { ensureWireGuardPeer(order.user_id, order.id); }
+    catch (error) { console.error('WireGuard provisioning retry pending:', error.message); }
+    return { alreadyPaid: true };
+  }
   const result = await clickPesaRequest('https://api.clickpesa.com/third-parties/payments/' + encodeURIComponent(orderReference));
   const payment = Array.isArray(result) ? result[0] : result;
   if (!payment || payment.status !== 'SUCCESS' || String(payment.orderReference) !== order.id ||
