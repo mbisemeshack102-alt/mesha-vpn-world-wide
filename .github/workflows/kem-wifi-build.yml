@@ -1,0 +1,55 @@
+name: KEM WIFI PRO SECURE build
+on:
+  push:
+    branches: [kem-vpn-foundation]
+    paths:
+      - "membership/**"
+      - ".github/workflows/kem-wifi-build.yml"
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: Build package
+        required: true
+        default: source-pwa
+        type: choice
+        options:
+          - source-pwa
+jobs:
+  test-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        working-directory: membership
+        run: npm install
+      - name: Run tests
+        working-directory: membership
+        run: npm test
+      - name: Check syntax
+        run: |
+          node --check membership/src/server.js
+          node --check membership/src/site-connector-auth.js
+          node --check membership/src/router-adapters.js
+          node --check membership/src/drivers/mikrotik-routeros.js
+          node --check membership/public/app.js
+          node --check membership/public/admin.js
+          node --check membership/public/sw.js
+      - name: Verify PWA assets and remove secret files
+        run: |
+          test -f membership/public/manifest.webmanifest
+          test -f membership/public/sw.js
+          test -f membership/public/wifi-manager.svg
+          ! find membership -name ".env" -o -name "*.pem" -o -name "*.key" | grep .
+      - name: Package application source
+        run: |
+          mkdir -p dist
+          zip -r dist/KEM-WIFI-PRO-SECURE-source-pwa.zip membership             -x "membership/node_modules/*"                "membership/.env"                "membership/**/.env"                "membership/**/node_modules/*"                "membership/data/*"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KEM-WIFI-PRO-SECURE-source-pwa
+          path: dist/KEM-WIFI-PRO-SECURE-source-pwa.zip
+          if-no-files-found: error
+          retention-days: 14
