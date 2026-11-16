@@ -1,0 +1,8 @@
+{
+  "appId": "tz.co.kem.wifiprosecure",
+  "appName": "KEM WIFI PRO SECURE",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
